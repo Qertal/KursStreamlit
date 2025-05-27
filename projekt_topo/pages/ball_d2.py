@@ -13,7 +13,7 @@ with col1:
         srodek_x = st.number_input("Współrzędna x środka kuli:", value=0, step=1)
         srodek_y = st.number_input("Współrzędna y środka kuli:", value=0, step=1)
         promien = st.number_input("Promień kuli:", value=1., min_value=0.1, step=.1)
-        metryka = st.number_input("Metryka (p):", value=2.0, step=0.1)
+        metryka = st.number_input("Metryka (p):", value=2.0, max_value=75.0, step=0.1)
 
         submitted = st.form_submit_button("Rysuj")
 
