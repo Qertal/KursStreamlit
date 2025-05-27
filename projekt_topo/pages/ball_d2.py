@@ -2,7 +2,9 @@ import streamlit as st
 import numpy as np
 from pages.func import kula
 
+st.set_page_config(page_title="Rysowanie kuli na płaszczyźnie", layout="wide")
 st.title("Rysowanie kuli na płaszczyźnie")
+
 
 col1, col2 = st.columns(2)
 with col1:
