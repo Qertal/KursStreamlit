@@ -15,13 +15,13 @@ dist = st.Page("pages/set_dist.py", title = 'Odległość między zbiorami', ico
 ball = st.Page("pages/ball_d2.py", title = 'Kula na płaszczyźnie', icon='⚽️')
 
 ### About page
-authours = st.Page("pages/about.py", title = 'Autorzy', icon='📋')
+# authours = st.Page("pages/about.py", title = 'Autorzy', icon='📋')
 
 pg = st.navigation(
     {
         "Home": [home],
-        'Metryka': [diam, dist, ball],
-        'O autorach': [authours]
+        'Metryka': [diam, dist, ball]#,
+        # 'O autorach': [authours]
     }
 )
 
