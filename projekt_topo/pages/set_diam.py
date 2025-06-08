@@ -5,7 +5,7 @@ import random
 
 st.title("Średnica zbioru")
 
-st.write("Tutaj, może obliczyć średnicę zbioru, a dodatkowo zobaczyć w jaki sposób wygląa macierz odległości. Wybierz przestrzeń w jakiej chcesz się znajdować oraz p odpowiednie dla konkretnej metryki mińkowskiego, jaka Cię interesuje.")
+st.write("Tutaj można obliczyć średnicę zbioru, a dodatkowo można zobaczyć w jaki sposób wygląda macierz odległości (jeśli jej rozmiar nie przekracza 10). Wybierz wymiar przestrzeni w jakiej chcesz się znajdować (n) oraz p odpowiednie dla konkretnej metryki mińkowskiego, jaka Cię interesuje.")
 
 nieskonczonosc = st.checkbox(label='Metryka maksimum')
 
@@ -61,5 +61,5 @@ if st.session_state.get('fields_generated', False):
         # st.code(macierz_txt)
 
         st.latex(macierz_do_latex(np.round(D, 2)))
-        st.write(f" **Średnica zbioru:** `{srednica:.4f}`")
+        st.markdown(f" **Średnica zbioru:** `{srednica:.4f}`")
 
