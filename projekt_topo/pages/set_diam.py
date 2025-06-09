@@ -43,7 +43,7 @@ if st.session_state.get('fields_generated', False):
                     points[i, k] = st.number_input(
                         label=f"Wspolrzedna {k + 1}",
                         key=f'coord_{i}_{k}',
-                        value=random.randint(0, 15)
+                        value=random.randint(-15, 15)
                     )
 
         submitted = st.form_submit_button(label="Oblicz")
@@ -51,7 +51,8 @@ if st.session_state.get('fields_generated', False):
     if submitted:
         D, srednica = macierz_odleglosci(points, p)
         # st.success("✅ Wyniki obliczeń:")
-        st.write(" **Macierz odległości:**")
+        if l <= 10:
+            st.write(" **Macierz odległości:**")
         # st.table(np.round(D, 2))
 
         # macierz_txt = "\n".join(
@@ -60,6 +61,6 @@ if st.session_state.get('fields_generated', False):
         # st.text("Macierz odległości:")
         # st.code(macierz_txt)
 
-        st.latex(macierz_do_latex(np.round(D, 2)))
+            st.latex(macierz_do_latex(np.round(D, 2)))
         st.markdown(f" **Średnica zbioru:** `{srednica:.4f}`")
 
