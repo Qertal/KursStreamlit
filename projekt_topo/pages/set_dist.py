@@ -55,8 +55,8 @@ with col3:
 # --- Przycisk generowania punktów ---
 if st.button("Generuj punkty"):
     st.session_state.fields_generated = True
-    st.session_state.points_E = np.random.randint(0, 15, size=(int(st.session_state.l_E), int(st.session_state.n))).astype(float)
-    st.session_state.points_F = np.random.randint(0, 15, size=(int(st.session_state.l_F), int(st.session_state.n))).astype(float)
+    st.session_state.points_E = np.random.randint(-15, 15, size=(int(st.session_state.l_E), int(st.session_state.n))).astype(float)
+    st.session_state.points_F = np.random.randint(-15, 15, size=(int(st.session_state.l_F), int(st.session_state.n))).astype(float)
 
 # --- Wprowadzanie punktów ---
 def wprowadz_punkty(label, l, points, prefix):
@@ -71,8 +71,8 @@ def wprowadz_punkty(label, l, points, prefix):
                 val = st.number_input(
                     label=f"x{k + 1}",
                     key=key,
-                    value=float(points[i, k]),
-                    format="%.2f"
+                    value=int(points[i, k]),
+                    step = 1
                 )
                 points[i, k] = st.session_state[key]
     return points
