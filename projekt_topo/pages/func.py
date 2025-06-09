@@ -14,10 +14,9 @@ def metryka_minkowskiego(x,y,p):
 def macierz_odleglosci(x,p):
     rozmiar = len(x)
     D = np.zeros((rozmiar,rozmiar))
-    if rozmiar < 11:
-        for i in range(len(x)):
-            for j in range(i,len(x)):
-                D[j,i] = D[i,j] = metryka_minkowskiego(x[i],x[j],p)
+    for i in range(len(x)):
+        for j in range(i,len(x)):
+            D[j,i] = D[i,j] = metryka_minkowskiego(x[i],x[j],p)
     # return print(f"Macierz odległości dla p = {p} wygląda następująco:\n{np.round(D,2)},\na średnica zbioru:\n{np.max(D)}")
     return D, np.max(D)  # dla macierzy odległości
 
