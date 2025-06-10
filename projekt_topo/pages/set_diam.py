@@ -5,12 +5,12 @@ import random
 
 st.title("Średnica zbioru")
 
-st.write("Tutaj można obliczyć średnicę zbioru, a dodatkowo można zobaczyć w jaki sposób wygląda macierz odległości (jeśli jej rozmiar nie przekracza 10). Wybierz wymiar przestrzeni w jakiej chcesz się znajdować (n) oraz p odpowiednie dla konkretnej metryki minkowskiego, jaka Cię interesuje.")
+st.write("Tutaj można obliczyć średnicę zbioru, a dodatkowo można zobaczyć w jaki sposób wygląda macierz odległości (jeśli jej rozmiar nie przekracza 10). Wybierz wymiar przestrzeni w jakiej chcesz się znajdować (n) oraz p odpowiednie dla konkretnej metryki Minkowskiego, jaka Cię interesuje.")
 
 nieskonczonosc = st.checkbox(label='Metryka maksimum')
 
 if nieskonczonosc == False:
-    p = st.number_input(label='Wartość p dla metryki minkowskiego',min_value=0.01)
+    p = st.number_input(label='Wartość p dla metryki Minkowskiego',min_value=0.01)
 else:
     p = float('inf')
 
