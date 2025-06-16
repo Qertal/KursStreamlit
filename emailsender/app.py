@@ -3,6 +3,8 @@ import ffmpeg
 import tempfile
 import os
 
+st.set_page_config(page_title="Kompresja wideo", layout="centered", initial_sidebar_state="collapsed")
+
 st.title("Kompresja wideo")
 
 uploaded_file = st.file_uploader("Wgraj film", type=["mp4"])
