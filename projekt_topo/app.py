@@ -1,5 +1,17 @@
 import streamlit as st
 
+st.set_page_config(layout="wide")
+
+st.markdown("""
+<style>
+/* Ukryj przyciski '+' i '-' w komponencie st.number_input */
+button[data-testid="stNumberInputStepUp"],
+button[data-testid="stNumberInputStepDown"] {
+    display: none;
+}
+</style>
+""", unsafe_allow_html=True)
+
 def home_page():
     st.title("Witamy na stronie głównej")
 

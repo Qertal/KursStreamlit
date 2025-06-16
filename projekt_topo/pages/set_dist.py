@@ -2,6 +2,8 @@ import streamlit as st
 import numpy as np
 from pages.func import odleglosc_miedzy_zbiorami
 
+
+
 # --- Inicjalizacja session_state ---
 defaults = {
     "fields_generated": False,
@@ -60,7 +62,7 @@ if st.button("Generuj punkty"):
 
 # --- Wprowadzanie punktów ---
 def wprowadz_punkty(label, l, points, prefix):
-    st.subheader(f"Wprowadź współrzędne {l} punktów w przestrzeni $ \mathbb{{R}}^{st.session_state.n} $")
+    st.subheader(f"Wprowadź współrzędne {l} punktów w przestrzeni $ \mathbb{{R}}^{{{st.session_state.n}}} $")
     for i in range(l):
         st.markdown(f"**Punkt {i + 1}:**")
         cols = st.columns(min(st.session_state.n, 5))

@@ -3,6 +3,8 @@ import numpy as np
 from pages.func import metryka_minkowskiego, macierz_odleglosci, macierz_do_latex
 import random
 
+
+
 st.title("Średnica zbioru")
 
 st.write("Tutaj można obliczyć średnicę zbioru, a dodatkowo można zobaczyć w jaki sposób wygląda macierz odległości (jeśli jej rozmiar nie przekracza 10). Wybierz wymiar przestrzeni w jakiej chcesz się znajdować (n) oraz p odpowiednie dla konkretnej metryki Minkowskiego, jaka Cię interesuje.")
@@ -29,7 +31,7 @@ if st.button(label=' Generuj pola', key='fields'):
 
 if st.session_state.get('fields_generated', False):
     with st.form(key='Wprowadzanie'):
-        st.latex(fr"\text{{Wprowadź współrzędne dla {int(l)} punktów w przestrzeni }} \mathbb{{R}}^{int(n)}")
+        st.latex(fr"\text{{Wprowadź współrzędne dla {int(l)} punktów w przestrzeni }} \mathbb{{R}}^{{{int(n)}}}")
         points = np.zeros(shape=(int(l), int(n)))
 
         for i in range(int(l)):
