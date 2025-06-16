@@ -1,32 +1,44 @@
 import streamlit as st
-import ffmpeg
+from moviepy.editor import VideoFileClip
 import tempfile
 import os
 
-st.set_page_config(page_title="Kompresja wideo", layout="centered", initial_sidebar_state="collapsed")
+st.title("🎥 Kompresja małego filmu")
 
-st.title("Kompresja wideo")
-
-uploaded_file = st.file_uploader("Wgraj film", type=["mp4"])
+uploaded_file = st.file_uploader("Wgraj plik MP4 (do 50 MB)", type=["mp4"])
 
 if uploaded_file is not None:
-    file_bytes = uploaded_file.read()  # odczytujemy RAZ
+    # Zapisujemy oryginał do pliku tymczasowego
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_input:
+        temp_input.write(uploaded_file.read())
+        temp_input_path = temp_input.name
 
-    st.video(file_bytes)
+    st.video(temp_input_path)
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_input:
-        tmp_input.write(file_bytes)
-        input_path = tmp_input.name
+    st.info("🔄 Trwa kompresja...")
 
-    output_path = input_path.replace(".mp4", "_compressed.mp4")
+    # Kompresujemy film do mniejszej rozdzielczości i bitrate
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_output:
+            clip = VideoFileClip(temp_input_path)
+            # Przytnij jakość i rozdzielczość do np. 480p
+            clip_resized = clip.resize(height=480)  # lub width=640
+            clip_resized.write_videofile(
+                temp_output.name,
+                codec="libx264", 
+                bitrate="500k",   # można ustawić 200k dla mniejszego rozmiaru
+                audio_codec="aac"
+            )
+            output_path = temp_output.name
 
-    st.info("Kompresuję wideo...")
+        st.success("✅ Kompresja zakończona!")
+        with open(output_path, "rb") as f:
+            st.download_button("Pobierz skompresowany film", f.read(), file_name="compressed.mp4")
 
-    ffmpeg.input(input_path).output(output_path, vcodec='libx264', crf=28).run()
+        # Sprzątanie
+        clip.close()
+        os.remove(temp_input_path)
+        os.remove(output_path)
 
-    with open(output_path, "rb") as file:
-        st.download_button("Pobierz skompresowany plik", file.read(), file_name="compressed.mp4")
-
-    # Sprzątanie
-    os.remove(input_path)
-    os.remove(output_path)
+    except Exception as e:
+        st.error(f"Błąd podczas kompresji: {str(e)}")

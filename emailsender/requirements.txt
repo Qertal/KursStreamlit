@@ -1,3 +1,2 @@
 matplotlib
-ffmpeg
-ffmpeg-python
+moviepy
