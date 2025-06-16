@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1749585236.81671 "c:/Users/pawel.drzyzga/Documents/KursStreamlit/projekt_topo/Dokumentacja/main.tex" "main.pdf" "main" 1749585238.55436 0
+["pdflatex"] 1749586516.02851 "c:/Users/pawel.drzyzga/Documents/KursStreamlit/projekt_topo/Dokumentacja/main.tex" "main.pdf" "main" 1749586518.0648 0
   "C:/Users/pawel.drzyzga/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map" 1731867020 159248 b79bf931741b563fab6abade39239c22 ""
   "C:/Users/pawel.drzyzga/AppData/Local/MiKTeX/fonts/pk/ljfour/jknappen/ec/dpi600/ecbx1000.pk" 1738007196 25420 d3dcd7cb6d59b16dec68a39343f22e79 ""
   "C:/Users/pawel.drzyzga/AppData/Local/MiKTeX/fonts/pk/ljfour/jknappen/ec/dpi600/ecbx1095.pk" 1728064288 28976 8da884802c22eda0069252afd252153d ""
@@ -182,10 +182,10 @@
   "C:/Users/pawel.drzyzga/AppData/Local/Programs/MiKTeX/tex/latex/tools/bm.sty" 1718356376 13236 1aba485b47e3c79a47dc0906cc971820 ""
   "C:/Users/pawel.drzyzga/AppData/Local/Programs/MiKTeX/tex/latex/url/url.sty" 1388490452 12796 8edb7d69a20b857904dd0ea757c14ec9 ""
   "C:/Users/pawel.drzyzga/AppData/Local/Programs/MiKTeX/tex/latex/xcolor/xcolor.sty" 1700127522 55487 80a65caedd3722f4c20a14a69e785d8f ""
-  "c:/Users/pawel.drzyzga/Documents/KursStreamlit/projekt_topo/Dokumentacja/main.tex" 1749585235 10966 fdf7f02e13c1cd70862fb3a8bf58a67a ""
+  "c:/Users/pawel.drzyzga/Documents/KursStreamlit/projekt_topo/Dokumentacja/main.tex" 1749586514 10928 e7275cd7d53a09dfefcb2b5447c45a2b ""
   "figure/Obraz1.png" 1749390204 19895 172267ae720050f0d6a5b798358dbc2a ""
   "figure/Screenshot_1.jpg" 1749390678 66601 2ecd801f934bfa2adadbea2107ab5628 ""
-  "figure/Screenshot_2.jpg" 1749394918 93492 a45eead293a070a4dee4d74b9af96e20 ""
+  "figure/Screenshot_2.png" 1749585624 212358 6cb594c593fd3c8ff02efc2e202e2576 ""
   "figure/Screenshot_3.jpg" 1749450011 92931 f297210d39213263cd45296b85e86ce2 ""
   "figure/Screenshot_4.jpg" 1749450855 62737 ba9ef29701e0dd11f2460ca142cc17ab ""
   "figure/Screenshot_5.jpg" 1749451949 84734 6d2adc93dffbd8b13d816ef07cc9198b ""
@@ -193,9 +193,9 @@
   "figure/Screenshot_7.jpg" 1749452019 36737 f024c685f9b3e3990e199af67b21dd9a ""
   "figure/Screenshot_8.jpg" 1749499476 88243 72596f2d43481d203feb3eefcb955fa4 ""
   "figure/Screenshot_9.jpg" 1749499996 94639 07817ad70954a2fe752adc1b40bba175 ""
-  "main.aux" 1749585238 3816 4167ebb8ff69c73f210a3bd0fd6ce3fe "pdflatex"
-  "main.out" 1749585238 1314 707d0a8e2b25eee8cff34525a8403792 "pdflatex"
-  "main.tex" 1749585235 10966 fdf7f02e13c1cd70862fb3a8bf58a67a ""
+  "main.aux" 1749586517 3816 4167ebb8ff69c73f210a3bd0fd6ce3fe "pdflatex"
+  "main.out" 1749586517 1314 707d0a8e2b25eee8cff34525a8403792 "pdflatex"
+  "main.tex" 1749586514 10928 e7275cd7d53a09dfefcb2b5447c45a2b ""
   (generated)
   "main.aux"
   "main.log"

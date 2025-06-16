@@ -75,16 +75,16 @@ Klikając w przycisk \textbf{Średnica zbioru} w polu nawigacji, przenosi nas na
 
 \begin{figure}[H] 
     \centering
-    \includegraphics[width=0.8\textwidth]{figure/Screenshot_2.jpg}
+    \includegraphics[width=0.8\textwidth]{figure/Screenshot_2.png}
     \caption{Formularz \textbf{Średnica zbioru}}\label{rys:sz}
 \end{figure}
 
-Możemy zauważyć, różne sposoby interakcji ze stroną (numerki z listy poniżej są zgodne z numerkami na rysunku):
+Możemy zauważyć różne sposoby interakcji ze stroną (numerki z listy poniżej są zgodne z numerkami na rysunku):
 \begin{enumerate}
     \item W tym miejscu, możemy wybrać, czy metryka z której chcemy skorzystać, jest to metryka Czebyszewa, z racji na jej utrudnioną w sposobie zapisu symbolikę, została ona odizolowana od reszty, od klasycznego wyboru rodzaju metryki.
     \item Jeśli nie zdecydujemy się na wybór metryki Czebyszewa, możemy określić jakie użyjemy p ($p\in\R_+$) dla metryki Minkowskiego, czyli $d(x,y)=\left(\sum_{i=1}^n |x_i-y_i|^p\right)^{1/p}$. Możliwe jest wybranie wartości $p < 1$, co skutkuje użyciem wzoru $d(x,y)=\left(\sum_{i=1}^n |x_i-y_i|^p\right)$. W momencie gdy wybierzemy metrykę Czebyszewa, pole to automatycznie znika.
     \item W tym miejscu wybieramy wymiary przestrzeni, w której będziemy pracować. Czyli chodzi konkretnie o $n$ dla przestrzeni $\R^n$ ($n\in\N\backslash \{0\} $).
-    \item Tutaj wybieramy ile punktów będzie w naszej przestrzeni. Wybierając $>10$ punktów, na sam koniec, nie zostanie wyświetlona macierz odległości, z racji na jej rozmiar. Warto mieć to na uwadzę.
+    \item Tutaj wybieramy ile punktów będzie w naszej przestrzeni. Wybierając $>10$ punktów, nie zostanie wyświetlona macierz odległości, z racji na jej rozmiar.
     \item Na koniec mamy przycisk \textbf{Generuj pola}, który generuje pola, które są potrzebne do wpisania punktów.
 \end{enumerate}
 
@@ -106,7 +106,7 @@ Po kliknięciu przycisku \textbf{Oblicz}, pierwsze co zostanie wyświetlone, to 
 
 \chapter{Odległość między zbiorami}
 
-Teraz z lewegu panelu wybieramy przycisk \textbf{Odległość między zbiorami}, co przenosi nas do sekcji poświęconej (jak sama nazwa wskazuje) obliczaniu odległości między dwoma zbiorami (\ref{rys:omz}). 
+Teraz z lewego panelu wybieramy przycisk \textbf{Odległość między zbiorami}, co przenosi nas do sekcji poświęconej obliczaniu odległości między dwoma zbiorami (\ref{rys:omz}). 
 
 \begin{figure}[H] 
     \centering
@@ -142,7 +142,7 @@ Po zdefiniowaniu punktów, klikamy przycisk \textbf{Oblicz odległość}, a apli
 
 \chapter{Rysowanie kul i sfer (eksperymentalnie)}
 
-W tej sekcji aplikacji możemy rysować kule otwarte, domknięte oraz sfery w przestrzeni dwuwymiarowej. Aby skorzystać z tej funkcji, należy kliknąć przycisk \textbf{Kule na płaszczyźnie} (tak, jestem świadomy tego, ze sfera nie jest kulą), co przeniesie nas do sekcji (\ref{rys:rk}). 
+W tej sekcji aplikacji możemy rysować kule otwarte, domknięte oraz sfery w przestrzeni dwuwymiarowej. Aby skorzystać z tej funkcji, należy kliknąć przycisk \textbf{Kule na płaszczyźnie} (tak, sfera nie jest kulą), co przeniesie nas do sekcji (\ref{rys:rk}). 
 
 \begin{figure}[H] 
     \centering
@@ -159,7 +159,7 @@ W tej sekcji mamy możliwość wyboru:
     \item Wybieramy metrykę. Nie ma tutaj niestety do wyboru metryki Czebyszewa. Jednak z punktu widzenia stricte rysowania, możemy wybrać górną granicę $p$ jaka jest narzucona, w tym przypadku jest to $p=75$. Wartość ta bardzo dobrze przybliża kule bądź sferę w przestrzeni dwuwymiarowej z metryką Czebyszewa. 
 \end{enumerate}
 
-Warto wspomnieć, ze zostało wprowadzone tutaj troche limitów, są one skutkiem ograniczeń przy rysowaniu wykresów i generowaniu punktów, zarówno ze strony logicznej jak i technicznej (ograniczenia złożoności obliczeniowej). Głównie chodzi o to że:
+Warto wspomnieć, że zostało wprowadzone tutaj trochę ograniczeń. Są one skutkiem ograniczeń przy rysowaniu wykresów i generowaniu punktów, zarówno ze strony logicznej jak i technicznej (ograniczenia złożoności obliczeniowej). Głównie chodzi o to, że:
 \begin{enumerate}
     \item promień kuli/sfery musi być z przedziału $[1.5, 10]$ (sam promień paradoksalnie nie ma zbyt dużego wpływu na to jak my ten rysunek i tak będziemy widzieć),
     \item p dla metryki Minkowskiego musi być z przedziału $[0.2, 75]$ 
@@ -175,6 +175,10 @@ Klikając przycisk \textbf{Rysuj}, aplikacja wygeneruje wykres z kulą/sferą w 
 
 \chapter{Podsumowanie i możliwości rozwoju}
 
-Jak widać, aplikacja jest dośc prosta w budowie jak i w obsłudze. Spełnia jednak ona swoje zadanie, czyli pozwala na obliczanie średnicy zbiorów, odległości między zbiorami oraz (poza koncertowo) rysowanie kul otwartych, domkniętych i sfer w przestrzeni dwuwymiarowej. W ramach rozwoju aplikacji, można by pomyśleć o obsłudzie wyrażeń niewymiernych przy obliczaniu średnicy zbiorów, czy też odległości między zbiorami. Dodatkowo można by dodać możliwość wyboru pomiędzy obliczeniami numerycznymi a symbolicznymi, co pozwoliłoby na uzyskanie dokładniejszych wyników. Może to być przydatne narzędzie dla studentów matematyki, którzy są na początku swojej drogi z topologią.
+Jak widać, aplikacja jest stosunkowo prosta zarówno w budowie, jak i w obsłudze. Mimo to spełnia swoje zadanie: umożliwia obliczanie średnicy zbiorów, odległości między zbiorami oraz – dodatkowo – rysowanie kul otwartych, domkniętych i sfer w przestrzeni dwuwymiarowej.
+
+W ramach dalszego rozwoju aplikacji warto rozważyć dodanie obsługi wyrażeń niewymiernych przy obliczaniu średnicy i odległości między zbiorami. Można także wprowadzić możliwość wyboru pomiędzy metodami obliczeń numerycznych a symbolicznymi, co pozwoliłoby na uzyskanie dokładniejszych wyników.
+
+Takie narzędzie może być szczególnie przydatne dla studentów matematyki znajdujących się na początku swojej drogi w poznawaniu zagadnień topologii.
 
 \end{document}
