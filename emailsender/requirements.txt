@@ -1,2 +1,3 @@
 matplotlib
 ffmpeg
+ffmpeg-python
