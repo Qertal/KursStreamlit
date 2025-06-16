@@ -8,13 +8,12 @@ st.title("Kompresja wideo")
 uploaded_file = st.file_uploader("Wgraj film", type=["mp4"])
 
 if uploaded_file is not None:
-    st.video(uploaded_file)  # pokazuje podgląd
-    with open("temp.mp4", "wb") as f:
-        f.write(uploaded_file.read())  # zapisuje na dysk
+    file_bytes = uploaded_file.read()  # odczytujemy RAZ
 
-if uploaded_file:
+    st.video(file_bytes)
+
     with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_input:
-        tmp_input.write(uploaded_file.read())
+        tmp_input.write(file_bytes)
         input_path = tmp_input.name
 
     output_path = input_path.replace(".mp4", "_compressed.mp4")
