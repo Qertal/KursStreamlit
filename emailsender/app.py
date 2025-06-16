@@ -5,7 +5,13 @@ import os
 
 st.title("Kompresja wideo")
 
-uploaded_file = st.file_uploader("Wgraj plik wideo", type=["mp4", "mov", "avi"])
+uploaded_file = st.file_uploader("Wgraj film", type=["mp4"])
+
+if uploaded_file is not None:
+    st.video(uploaded_file)  # pokazuje podgląd
+    with open("temp.mp4", "wb") as f:
+        f.write(uploaded_file.read())  # zapisuje na dysk
+
 if uploaded_file:
     with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_input:
         tmp_input.write(uploaded_file.read())
