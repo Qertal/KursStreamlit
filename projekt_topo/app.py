@@ -18,10 +18,8 @@ def home_page():
     st.subheader("Korzystając z panelu z lewej strony, możesz przenieść się do interesującej Cię zakładki.")
 
     st.markdown("""
-                Autorzy projektu:
-                - **Kamil Jarkowski**,
-                - **Damian Forma**,
-                - **Paweł Drzyzga**.
+                Autorstwa:
+                **Pawła Drzyzgi**.
                 """)
 
 ### Main page
