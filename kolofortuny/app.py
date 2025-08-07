@@ -38,15 +38,16 @@ Patrycja R
 Dominik Sado
 Dominik Sepioło
 Dawid
-Jarek
+Jareks
 Beata
 Agata
 Marta B
 Tomek
 Alicja
-Agnieszka
 Michal
-Aneta"""
+Aneta
+Wojciech
+Wiktoria"""
     ).splitlines()
 
     if st.button("Zatwierdź opcje") and len([opt for opt in options if opt.strip()]):
