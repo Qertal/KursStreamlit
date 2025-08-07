@@ -2,14 +2,21 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import random
 
 st.set_page_config(
     page_title="Koło Fortuny",
     layout="wide")
 
 def tom_first(options):
-    # wrzuca tomka na poczatek lsity 
-    return ['Tomek'] + [x for x in options if x != 'Tomek'] if 'Tomek' in options else options
+    # Jeśli "Tomek" jest w liście, umieść go na początku, a resztę przetasuj
+    if 'Tomek' in options:
+        others = [x for x in options if x != 'Tomek']
+        random.shuffle(others)
+        return ['Tomek'] + others
+    else:
+        random.shuffle(options)
+        return options
 
 if 'options' not in st.session_state:
     st.session_state.options = []
@@ -79,6 +86,7 @@ if st.session_state.options:
                         w.set_linewidth(1)
                 ax.set_aspect('equal')
                 spin_placeholder.pyplot(fig)
+                plt.close(fig)
                 time.sleep(0.05 + 0.005 * i)
             st.session_state.spinning = False
             winner = options_sorted[winner_idx]
