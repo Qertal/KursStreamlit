@@ -23,7 +23,7 @@ def home_page():
                 """)
 
 ### Main page
-home = st.Page(home_page, title = 'Strona Główna', icon='🏠')
+home = st.Page(home_page, title = 'Topology app', icon='🏠')
 
 ### Interior
 
