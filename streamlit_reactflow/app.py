@@ -69,27 +69,54 @@
 
 import streamlit as st
 from streamlit_flow import streamlit_flow
-from streamlit_flow.elements import StreamlitFlowNode, StreamlitFlowEdge 
+from streamlit_flow.elements import StreamlitFlowNode, StreamlitFlowEdge
 from streamlit_flow.state import StreamlitFlowState
 from streamlit_flow.layouts import LayeredLayout
-        
+
+# Page config must be set before any other Streamlit calls
+# Start with sidebar collapsed and remove interactive sidebar controls so
+# the app always behaves as if the fullscreen checkbox were unchecked.
+st.set_page_config(layout='wide', initial_sidebar_state='collapsed')
+
+# Legend explaining node colors / roles
+st.markdown(
+        """
+        <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem;">
+            <div style="display:flex; gap:.5rem; align-items:center;">
+                <div style="width:18px; height:18px; background:#007acc; border-radius:3px; border:1px solid #ccc"></div>
+                <div><strong>SP</strong> — BiPoint (Service Provider)</div>
+            </div>
+            <div style="display:flex; gap:.5rem; align-items:center;">
+                <div style="width:18px; height:18px; background:#ff8c00; border-radius:3px; border:1px solid #ccc"></div>
+                <div><strong>Keycloak</strong> — IdP / SP-broker</div>
+            </div>
+            <div style="display:flex; gap:.5rem; align-items:center;">
+                <div style="width:18px; height:18px; background:#2ecc71; border-radius:3px; border:1px solid #ccc"></div>
+                <div><strong>Okta</strong> — IdP</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+)
+
+# Define nodes using explicit keyword args to avoid positional-arg mistakes
 nodes = [
-    StreamlitFlowNode(id='1', pos=(0, 200), data={'content': 'Wejście na stronę\nBiPoint'}, node_type='input', source_position='right', style={'whiteSpace': 'pre-wrap'}),
-    StreamlitFlowNode('2', (200, 200), {'content': 'Przekierowanie do\nKeyCloaka'}, 'default', 'right', 'left', style={'whiteSpace': 'pre-wrap'}),
-    StreamlitFlowNode('3', (350, 120), {'content': 'Logowanie\nza pomocą credentiali'}, 'default', 'right', 'left', style={'whiteSpace': 'pre-wrap'}),
-    StreamlitFlowNode('4', (350, 280), {'content': 'Czy konto bipoint\njuż istnieje?'}, 'default', 'right', 'left', style={'whiteSpace': 'pre-wrap'}),
+    StreamlitFlowNode(id='1', pos=(0, 200), data={'content': '[BiPoint] Wejście na stronę\nBiPoint'}, node_type='input', source_position='right', style={'whiteSpace': 'pre-wrap', 'color': 'white', 'backgroundColor': '#007acc', 'border': '2px solid white'}),
+    StreamlitFlowNode(id='2', pos=(200, 200), data={'content': '[Keycloak]\nPrzekierowanie do\nKeyCloaka'}, node_type='default', source_position='right', target_position='left', style={'whiteSpace': 'pre-wrap', 'color': 'white', 'backgroundColor': '#ff8c00', 'border': '2px solid white'}),
+    StreamlitFlowNode(id='3', pos=(350, 120), data={'content': '[Keycloak]\nLogowanie\nza pomocą credentiali'}, node_type='default', source_position='right', target_position='left', style={'whiteSpace': 'pre-wrap', 'color': 'white', 'backgroundColor': '#ff8c00', 'border': '2px solid white'}),
+    StreamlitFlowNode(id='4', pos=(350, 280), data={'content': '[BiPoint]\nCzy konto bipoint\njuż istnieje?'}, node_type='default', source_position='right', target_position='left', style={'whiteSpace': 'pre-wrap', 'color': 'white', 'backgroundColor': '#007acc', 'border': '2px solid white'}),
     # these four nodes are forced to the same x to form a single column on the right
-    StreamlitFlowNode('5', (700, 80), {'content': 'Przekierowanie na pointa\ni tworzenie konta'}, 'default', 'right', 'left', style={'whiteSpace': 'pre-wrap'}),
-    StreamlitFlowNode('6', (700, 220), {'content': 'Przekierowanie do pointa\ni zalogowanie'}, 'default', 'right', 'left', style={'whiteSpace': 'pre-wrap'}),
-    StreamlitFlowNode('7', (200, 60), {'content': 'Logowanie za pomocą SSO\n(przekierowanie na okte)'}, 'default', 'right', 'left', style={'whiteSpace': 'pre-wrap'}),
-    StreamlitFlowNode('8', (350, 60), {'content': 'Logowanie\ndo okty'}, 'default', 'right', 'left', style={'whiteSpace': 'pre-wrap'}),
-    StreamlitFlowNode('10', (500, 60), {'content': 'Czy konto KeyCloak/\nBiPoint istnieje?'}, 'default', 'right', 'left', style={'whiteSpace': 'pre-wrap'}),
-    StreamlitFlowNode('11', (500, 160), {'content': 'Przekierowanie na KeyCloak\ni przesłanie claimów'}, 'default', 'right', 'left', style={'whiteSpace': 'pre-wrap'}),
-    StreamlitFlowNode('12', (500, 260), {'content': 'Utworzenie konta KeyCloak,\nuzupełnienie danych za pomocą claimów'}, 'default', 'right', 'left', style={'whiteSpace': 'pre-wrap'}),
-    StreamlitFlowNode('13', (700, 360), {'content': 'Przekierowanie na BiPoint\ni tworzenie konta'}, 'default', 'right', 'left', style={'whiteSpace': 'pre-wrap'}),
-    StreamlitFlowNode('14', (500, 360), {'content': 'Synchronizacja z\nkontem keycloak'}, 'default', 'right', 'left', style={'whiteSpace': 'pre-wrap'}),
-    StreamlitFlowNode('15', (700, 500), {'content': 'Przekierowanie do BiPoint\ni zalogowanie'}, 'default', 'right', 'left', style={'whiteSpace': 'pre-wrap'}),
-    StreamlitFlowNode('16', (900, 300), {'content': 'Witamy w BiPoint!\n:D'}, 'output', 'right', 'left', style={'whiteSpace': 'pre-wrap'}),
+    StreamlitFlowNode(id='5', pos=(700, 80), data={'content': '[BiPoint] Przekierowanie na pointa\ni tworzenie konta'}, node_type='default', source_position='right', target_position='left', style={'whiteSpace': 'pre-wrap', 'color': 'white', 'backgroundColor': '#007acc', 'border': '2px solid white'}),
+    StreamlitFlowNode(id='6', pos=(700, 220), data={'content': '[BiPoint] Przekierowanie do pointa\ni zalogowanie'}, node_type='default', source_position='right', target_position='left', style={'whiteSpace': 'pre-wrap', 'color': 'white', 'backgroundColor': '#007acc', 'border': '2px solid white'}),
+    StreamlitFlowNode(id='7', pos=(200, 60), data={'content': '[Okta]\nLogowanie za pomocą SSO\n(przekierowanie na okte)'}, node_type='default', source_position='right', target_position='left', style={'whiteSpace': 'pre-wrap', 'color': 'white', 'backgroundColor': '#2ecc71', 'border': '2px solid white'}),
+    StreamlitFlowNode(id='8', pos=(350, 60), data={'content': '[Okta]\nLogowanie\ndo okty'}, node_type='default', source_position='right', target_position='left', style={'whiteSpace': 'pre-wrap', 'color': 'white', 'backgroundColor': '#2ecc71', 'border': '2px solid white'}),
+    StreamlitFlowNode(id='10', pos=(500, 60), data={'content': '[Keycloak]\nCzy konto KeyCloak/\nBiPoint istnieje?'}, node_type='default', source_position='right', target_position='left', style={'whiteSpace': 'pre-wrap', 'color': 'white', 'backgroundColor': '#ff8c00', 'border': '2px solid white'}),
+    StreamlitFlowNode(id='11', pos=(500, 160), data={'content': '[Keycloak]\nPrzekierowanie na KeyCloak\ni przesłanie claimów'}, node_type='default', source_position='right', target_position='left', style={'whiteSpace': 'pre-wrap', 'color': 'white', 'backgroundColor': '#ff8c00', 'border': '2px solid white'}),
+    StreamlitFlowNode(id='12', pos=(500, 260), data={'content': '[Keycloak]\nUtworzenie konta KeyCloak,\nuzupełnienie danych za pomocą claimów'}, node_type='default', source_position='right', target_position='left', style={'whiteSpace': 'pre-wrap', 'color': 'white', 'backgroundColor': '#ff8c00', 'border': '2px solid white'}),
+    StreamlitFlowNode(id='13', pos=(700, 360), data={'content': '[BiPoint] Przekierowanie na BiPoint\ni tworzenie konta'}, node_type='default', source_position='right', target_position='left', style={'whiteSpace': 'pre-wrap', 'color': 'white', 'backgroundColor': '#007acc', 'border': '2px solid white'}),
+    StreamlitFlowNode(id='14', pos=(500, 360), data={'content': '[Keycloak]\nSynchronizacja z\nkontem keycloak'}, node_type='default', source_position='right', target_position='left', style={'whiteSpace': 'pre-wrap', 'color': 'white', 'backgroundColor': '#ff8c00', 'border': '2px solid white'}),
+    StreamlitFlowNode(id='15', pos=(700, 500), data={'content': '[BiPoint] Przekierowanie do BiPoint\ni zalogowanie'}, node_type='default', source_position='right', target_position='left', style={'whiteSpace': 'pre-wrap', 'color': 'white', 'backgroundColor': '#007acc', 'border': '2px solid white'}),
+    StreamlitFlowNode(id='16', pos=(900, 300), data={'content': '[BiPoint] Witamy w BiPoint!\n:D'}, node_type='output', source_position='right', target_position='left', style={'whiteSpace': 'pre-wrap', 'color': 'white', 'backgroundColor': '#007acc', 'border': '2px solid white'}),
 ]
 
 edges = [
@@ -114,30 +141,9 @@ edges = [
 
 if 'flow_state' not in st.session_state:
     st.session_state.flow_state = StreamlitFlowState(nodes, edges)
-# Make the page use the full width and attempt to fill viewport height.
-st.set_page_config(layout='wide')
 
-# Inject CSS to reduce paddings and make main area fill the viewport height so
-# the flow component can occupy the full page.
-st.markdown(
-    """<style>
-    html, body, [data-testid="stAppViewContainer"], [data-testid="stAppViewContainer"] > .main, .block-container {
-        height: 100vh;
-        margin: 0;
-        padding: 0;
-    }
-    .block-container {
-        padding-top: 0rem;
-        padding-bottom: 0rem;
-    }
-    .stApp { overflow: hidden; }
-    /* Make common React Flow / component wrappers fill the viewport height */
-    .reactflow-wrapper, .react-flow, .react-flow__viewport, .react-flow__renderer, .streamlit-flow, iframe {
-        height: 100vh !important;
-    }
-    </style>""",
-    unsafe_allow_html=True,
-)
+# Sidebar removed; no fullscreen CSS is injected so the view behaves like the
+# checkbox would be unchecked (normal, non-fullscreen layout).
 
 # Render the flow (fit_view=True helps to center/fit nodes in view)
-streamlit_flow('tree_layout', st.session_state.flow_state, layout=LayeredLayout(direction='right'), fit_view=True) 
+streamlit_flow('tree_layout', st.session_state.flow_state, layout=LayeredLayout(direction='right'), fit_view=True)

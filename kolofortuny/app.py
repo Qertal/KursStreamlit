@@ -9,11 +9,24 @@ st.set_page_config(
     layout="wide")
 
 def tom_first(options):
-    # Jeśli "Tomek" jest w liście, umieść go na początku, a resztę przetasuj
+    # Jeśli "Tomek" jest w liście, umieść go losowo na pozycji 2., 3. lub 4.
+    # Zastosujemy ważone losowanie i upewnimy się, że nie będzie pierwszy (jeśli możliwe).
     if 'Tomek' in options:
         others = [x for x in options if x != 'Tomek']
         random.shuffle(others)
-        return ['Tomek'] + others
+        n = len(options)
+        max_pos = min(3, n - 1)
+        if max_pos < 1:
+            # tylko Tomek
+            return ['Tomek'] + others
+        choices = list(range(1, max_pos + 1))
+        weights = [3 if c == 1 else 2 if c == 2 else 1 for c in choices]
+        pos = random.choices(choices, weights=weights, k=1)[0]
+        result = others[:pos] + ['Tomek'] + others[pos:]
+        # upewnij się, że Tomek nie jest pierwszy, jeśli jest inny element
+        if len(result) > 1 and result[0] == 'Tomek':
+            result[0], result[1] = result[1], result[0]
+        return result
     else:
         random.shuffle(options)
         return options
@@ -22,6 +35,13 @@ if 'options' not in st.session_state:
     st.session_state.options = []
 if 'last_winner' not in st.session_state:
     st.session_state.last_winner = None
+# initialize control state once
+if 'spinning' not in st.session_state:
+    st.session_state.spinning = False
+if 'spin_attempt' not in st.session_state:
+    st.session_state.spin_attempt = 0
+if 'place' not in st.session_state:
+    st.session_state.place = random.randint(1, 3)
 
 # Wpisywanie opcji tylko na początku gry
 if not st.session_state.options:
@@ -33,12 +53,11 @@ Filip
 Gerard
 Patrycja Sz
 Piotrek
-Weronika
 Patrycja R
 Dominik Sado
 Dominik Sepioło
 Dawid
-Jareks
+Jarek
 Beata
 Agata
 Marta B
@@ -56,20 +75,30 @@ Wiktoria"""
 
 if st.session_state.options:
     col4, col1, col2, col3 = st.columns([1,5,5,1])  # poidzial na kolsy, zeby to w miare sensownie wygladalo
+    # use session_state counters so values persist across reruns
+    iterat = st.session_state.spin_attempt
+    place = st.session_state.place
     with col1:
         spin = st.button("Zakręć kołem!")
-        if 'spinning' not in st.session_state:
-            st.session_state.spinning = False
+        # spinning is initialized at module start
 
         options_sorted = tom_first(st.session_state.options)
         n = len(options_sorted)
 
         if spin and not st.session_state.spinning:
+            # increment attempt counter
+            st.session_state.spin_attempt += 1
+            iterat = st.session_state.spin_attempt
             st.session_state.spinning = True
             spin_placeholder = st.empty()
             # tomek pierwszy, do dodania siebie gdzies chociaz w miare na poczatku XD, coś a'la 3/4, ewentualnie pod koniec jak i tak losuje
-            if 'Tomek' in options_sorted:
-                winner_idx = 0
+            if 'Tomek' in options_sorted and iterat == place:
+                # force Tomek to win on this spin attempt
+                winner_idx = options_sorted.index('Tomek')
+                # after forcing, pick a new random place for next time
+                st.session_state.place = random.randint(1, 3)
+                st.session_state.spin_attempt = 0
+                iterat = 0
             else:
                 winner_idx = np.random.randint(n)
 
@@ -88,12 +117,13 @@ if st.session_state.options:
                 ax.set_aspect('equal')
                 spin_placeholder.pyplot(fig)
                 plt.close(fig)
-                time.sleep(0.05 + 0.005 * i)
+                time.sleep(0.01)
             st.session_state.spinning = False
             winner = options_sorted[winner_idx]
             st.session_state.last_winner = winner
             st.session_state.options.remove(winner)
-            time.sleep(1.0)
+            time.sleep(0.25)
+            # iterat is managed in session_state
         else:
             if options_sorted:
                 fig, ax = plt.subplots(figsize=(5, 5))
@@ -131,7 +161,11 @@ if st.session_state.options:
     if not st.session_state.options:
         st.info("Wszystkie opcje zostały już wylosowane! 🎉")
         if st.button("Zagraj od nowa"):
-            del st.session_state.options
+            # bezpieczny reset całego stanu gry
+            st.session_state.options = []
             st.session_state.last_winner = None
+            st.session_state.spin_attempt = 0
+            st.session_state.place = random.randint(1, 3)
+            st.session_state.spinning = False
 else:
     st.info("Wpisz opcje i zatwierdź, aby rozpocząć zabawę!")
