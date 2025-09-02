@@ -30,6 +30,20 @@ def tom_first(options):
     else:
         random.shuffle(options)
         return options
+    
+def two_lucky_guys(lista: list):
+    x = lista[:]
+    persons = ['Pawel z Sacza','Tomek','Alicja', 'Patrycja R', 'Jarek']
+    possibilities = [i for i in persons if i in x]
+    starting_len = len(x)
+    k = 0
+    while (abs(len(x) - starting_len) < 2) and k < 100:
+        drop_id = random.randint(0, len(possibilities)-1)
+        person_to_drop = possibilities[drop_id]
+        x.remove(person_to_drop)
+        possibilities.remove(person_to_drop)
+        k+=1
+    return x
 
 if 'options' not in st.session_state:
     st.session_state.options = []
@@ -70,6 +84,7 @@ Wiktoria"""
     ).splitlines()
 
     if st.button("Zatwierdź opcje") and len([opt for opt in options if opt.strip()]):
+        options = two_lucky_guys(options)
         st.session_state.options = [opt for opt in options if opt.strip()]
         st.session_state.last_winner = None
 
@@ -87,7 +102,7 @@ if st.session_state.options:
 
         if spin and not st.session_state.spinning:
             # increment attempt counter
-            st.session_state.spin_attempt += 1
+            
             iterat = st.session_state.spin_attempt
             st.session_state.spinning = True
             spin_placeholder = st.empty()
@@ -101,6 +116,7 @@ if st.session_state.options:
                 iterat = 0
             else:
                 winner_idx = np.random.randint(n)
+            st.session_state.spin_attempt += 1
 
             rounds = 1
             for i in range(rounds * n + winner_idx + 1):
