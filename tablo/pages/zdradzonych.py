@@ -1,7 +1,17 @@
 import streamlit as st
 import os
+from _paths import get_data_dir
 
-files = os.listdir(os.getcwd() + '/zdradzonych/')
+DATA_DIR = get_data_dir('zdrajcow')
+
+if not DATA_DIR.exists():
+    st.error(f"Nie znaleziono katalogu z danymi: {DATA_DIR}\n"
+             f"Utwórz folder 'zdrajcow' w repo (np. 'tablo/zdrajcow') i dodaj pliki.")
+    st.stop()
+
+files = sorted([p for p in DATA_DIR.iterdir() if p.is_file()])
+st.write(f"Znaleziono {len(files)} plików w {DATA_DIR}")
+# files = os.listdir(os.getcwd() + '/zdradzonych/')
 
 members = {}
 for i in files:
