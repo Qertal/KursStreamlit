@@ -7,10 +7,10 @@ def home_page():
     st.title("Tablo zdrajców")
 
     st.subheader("Z panelu z lewej strony wybierz, do którego tablo chcesz przejść.")
-    st.markdown("""
-                Implementacja autorstwa:
-                **Pawła Drzyzgi**.
-                """)
+    # st.markdown("""
+    #             Implementacja autorstwa:
+    #             **Pawła Drzyzgi**.
+    #             """)
     
 
 home = st.Page(home_page, title = 'Tablo', icon='🏠')
