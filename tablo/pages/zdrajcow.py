@@ -2,7 +2,6 @@ import streamlit as st
 import os
 
 
-# folder with images
 dir_path = os.path.join(os.getcwd(), 'tablo', 'zdrajcow')
 
 if not os.path.isdir(dir_path):
@@ -10,7 +9,6 @@ if not os.path.isdir(dir_path):
 else:
     files = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
 
-    # parse filenames like "<id>_<name>.<ext>"; keep items with optional numeric id
     images = []
     for f in files:
         base = os.path.splitext(f)[0]
@@ -26,12 +24,10 @@ else:
             name = parts[0]
         images.append((id_num if id_num is not None else float('inf'), name, f))
 
-    # sort by id when present, otherwise keep at the end
     images.sort(key=lambda x: x[0])
 
     st.title('Tablo zdrajców')
 
-    # show images in rows of 3
     for i in range(0, len(images), 3):
         row = images[i:i+3]
         cols = st.columns(3)
