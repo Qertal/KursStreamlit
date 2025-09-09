@@ -87,7 +87,7 @@ Wiktoria"""
     ).splitlines()
 
     if st.button("Zatwierdź opcje") and len([opt for opt in options if opt.strip()]):
-        options = two_lucky_guys(options)
+        # options = two_lucky_guys(options)
         st.session_state.options = [opt for opt in options if opt.strip()]
         st.session_state.last_winner = None
         st.session_state.last_gif = None
