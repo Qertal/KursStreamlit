@@ -29,10 +29,10 @@ for id, (name, filename, column) in members.items():
         col0, col1, col2 = st.columns(3)
     if column == 0:
         with col0:
-            st.image('zdrajcow/' + filename, caption=name, use_container_width=True)
+            st.image(str(DATA_DIR / filename), caption=name, use_container_width=True)
     elif column == 1:
         with col1:
-            st.image('zdrajcow/' + filename, caption=name, use_container_width=True)
+            st.image(str(DATA_DIR / filename), caption=name, use_container_width=True)
     else:
         with col2:
-            st.image('zdrajcow/' + filename, caption=name, use_container_width=True)
+            st.image(str(DATA_DIR / filename), caption=name, use_container_width=True)
