@@ -1,12 +1,11 @@
 import streamlit as st
 import os
-from _paths import get_data_dir
+from pathlib import Path
 
-DATA_DIR = get_data_dir('zdrajcow')
+DATA_DIR = Path(__file__).parent.parent / "zdrajcow"
 
 if not DATA_DIR.exists():
-    st.error(f"Nie znaleziono katalogu z danymi: {DATA_DIR}\n"
-             f"Utwórz folder 'zdrajcow' w repo (np. 'tablo/zdrajcow') i dodaj pliki.")
+    st.error(f"Nie znaleziono katalogu z danymi: {DATA_DIR}")
     st.stop()
 
 files = sorted([p for p in DATA_DIR.iterdir() if p.is_file()])
