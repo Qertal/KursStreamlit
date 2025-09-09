@@ -1,38 +1,41 @@
 import streamlit as st
 import os
-import re
 
-base_dir = os.path.join(os.getcwd(), 'tablo', 'zdrajcow')
-if not os.path.isdir(base_dir):
-    st.error(f"Directory not found: {base_dir}")
-    st.stop()
 
-# only keep common image extensions
-files = [f for f in os.listdir(base_dir) if re.search(r'\.(jpg|jpeg|png|gif)$', f, re.I)]
+# folder with images
+dir_path = os.path.join(os.getcwd(), 'tablo', 'zdrajcow')
 
-members = {}
-for i in files:
-    name_part, _ = os.path.splitext(i)
-    parts = name_part.split('_', 1)
-    if len(parts) != 2:
-        # skip files that don't match '<id>_<name>.<ext>'
-        continue
-    member_id, member_name = parts
-    try:
-        column = int(member_id) % 3
-    except ValueError:
-        # skip non-numeric ids
-        continue
-    members[member_id] = (member_name, i, column)
+if not os.path.isdir(dir_path):
+    st.error(f"Katalog z obrazami nie istnieje: {dir_path}")
+else:
+    files = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
 
-col0, col1, col2 = st.columns([3,2,3])
+    # parse filenames like "<id>_<name>.<ext>"; keep items with optional numeric id
+    images = []
+    for f in files:
+        base = os.path.splitext(f)[0]
+        parts = base.split('_', 1)
+        if len(parts) == 2:
+            id_part, name = parts
+            try:
+                id_num = int(id_part)
+            except ValueError:
+                id_num = None
+        else:
+            id_num = None
+            name = parts[0]
+        images.append((id_num if id_num is not None else float('inf'), name, f))
 
-with col1:
+    # sort by id when present, otherwise keep at the end
+    images.sort(key=lambda x: x[0])
+
     st.title('Tablo zdrajców')
 
-cols = (col0, col1, col2)
-
-# iterate in numeric order of ids
-for member_id, (name, filename, column) in sorted(members.items(), key=lambda x: int(x[0])):
-    with cols[column]:
-        st.image(os.path.join('tablo', 'zdrajcow', filename), caption=name, use_container_width=True)
+    # show images in rows of 3
+    for i in range(0, len(images), 3):
+        row = images[i:i+3]
+        cols = st.columns(3)
+        for j, (_, name, filename) in enumerate(row):
+            with cols[j]:
+                img_path = os.path.join('tablo', 'zdrajcow', filename)
+                st.image(img_path, caption=name, use_container_width=True)
