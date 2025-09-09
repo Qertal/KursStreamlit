@@ -2,7 +2,8 @@ import streamlit as st
 import os
 
 
-dir_path = os.path.join(os.getcwd(), 'tablo', 'zdrajcow')
+# dir_path = os.path.join(os.getcwd(), 'tablo', 'zdrajcow')
+dir_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'zdrajcow')
 
 if not os.path.isdir(dir_path):
     st.error(f"Katalog z obrazami nie istnieje: {dir_path}")
@@ -33,5 +34,5 @@ else:
         cols = st.columns(3)
         for j, (_, name, filename) in enumerate(row):
             with cols[j]:
-                img_path = os.path.join('tablo', 'zdrajcow', filename)
+                img_path = os.path.join(dir_path, filename)
                 st.image(img_path, caption=name, use_container_width=True)
