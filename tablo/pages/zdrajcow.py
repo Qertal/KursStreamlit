@@ -1,17 +1,8 @@
 import streamlit as st
 import os
-from pathlib import Path
 
-DATA_DIR = Path(__file__).parent.parent / "zdrajcow"
 
-if not DATA_DIR.exists():
-    st.error(f"Nie znaleziono katalogu z danymi: {DATA_DIR}")
-    st.stop()
-
-files = sorted([p for p in DATA_DIR.iterdir() if p.is_file()])
-st.write(f"Znaleziono {len(files)} plików w {DATA_DIR}")
-
-# files = os.listdir(os.getcwd() + '/zdrajcow/')
+files = os.listdir(os.getcwd() + '/tablo/zdrajcow/')
 
 members = {}
 for i in files:
@@ -29,10 +20,10 @@ for id, (name, filename, column) in members.items():
         col0, col1, col2 = st.columns(3)
     if column == 0:
         with col0:
-            st.image(str(DATA_DIR / filename), caption=name, use_container_width=True)
+            st.image('tablo/zdrajcow/' + filename, caption=name, use_container_width=True)
     elif column == 1:
         with col1:
-            st.image(str(DATA_DIR / filename), caption=name, use_container_width=True)
+            st.image('tablo/zdrajcow/' + filename, caption=name, use_container_width=True)
     else:
         with col2:
-            st.image(str(DATA_DIR / filename), caption=name, use_container_width=True)
+            st.image('tablo/zdrajcow/' + filename, caption=name, use_container_width=True)
