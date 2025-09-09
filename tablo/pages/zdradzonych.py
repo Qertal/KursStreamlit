@@ -1,28 +1,40 @@
 import streamlit as st
 import os
 
-files = os.listdir(os.getcwd() + '/tablo/zdradzonych/')
+# folder with images
+dir_path = os.path.join(os.getcwd(), 'tablo', 'zdradzonych')
 
-members = {}
-for i in files:
-    member = os.path.splitext(i)[0].split('_')
-    members[member[0]] = member[1], i, int(member[0])%3
+if not os.path.isdir(dir_path):
+    st.error(f"Katalog z obrazami nie istnieje: {dir_path}")
+else:
+    files = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
 
-col0, col1, col2 = st.columns([3,3,3])
+    # parse filenames like "<id>_<name>.<ext>"; keep items with optional numeric id
+    images = []
+    for f in files:
+        base = os.path.splitext(f)[0]
+        parts = base.split('_', 1)
+        if len(parts) == 2:
+            id_part, name = parts
+            try:
+                id_num = int(id_part)
+            except ValueError:
+                id_num = None
+        else:
+            id_num = None
+            name = parts[0]
+        images.append((id_num if id_num is not None else float('inf'), name, f))
 
-with col1:
+    # sort by id when present, otherwise keep at the end
+    images.sort(key=lambda x: x[0])
+
     st.title('Tablo zdradzonych')
 
-for id, (name, filename, column) in members.items():
-    # st.image('zdrajcow/' + filename, caption=name)
-    if column == 0:
-        col0, col1, col2 = st.columns(3)
-    if column == 0:
-        with col0:
-            st.image('tablo/zdradzonych/' + filename, caption=name, use_container_width=True)
-    elif column == 1:
-        with col1:
-            st.image('tablo/zdradzonych/' + filename, caption=name, use_container_width=True)
-    else:
-        with col2:
-            st.image('tablo/zdradzonych/' + filename, caption=name, use_container_width=True)
+    # show images in rows of 3
+    for i in range(0, len(images), 3):
+        row = images[i:i+3]
+        cols = st.columns(3)
+        for j, (_, name, filename) in enumerate(row):
+            with cols[j]:
+                img_path = os.path.join('tablo', 'zdradzonych', filename)
+                st.image(img_path, caption=name, use_container_width=True)
