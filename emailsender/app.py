@@ -173,15 +173,7 @@ if 'liczba_cwiczen' in st.session_state:
             PASSWORD = st.secrets["PASSWORD"]
             DESTINATION = st.secrets["DESTINATION"]
 
-            # Build multipart email: plain-text fallback + HTML table
-            msg = EmailMessage()
-            msg["From"] = USERNAME
-            msg["To"] = DESTINATION
-            msg["Subject"] = title
-            # plain text fallback (do not URL-encode)
-            msg.set_content(email_body)
-            # add HTML alternative containing the centered table
-            msg.add_alternative(html_table, subtype="html")
+            # We'll build the EmailMessage after upload and after we finalize email_body/html_table
 
             # Upload uploaded files to Google Drive and collect shareable links
             drive_links = []
@@ -244,14 +236,16 @@ if 'liczba_cwiczen' in st.session_state:
                 # append links list under the existing HTML table
                 html_table = html_table + links_html
 
-                # Update the EmailMessage content so the links are actually sent
-                try:
-                    # update plain-text body
-                    msg.set_content(email_body)
-                    # add/update HTML alternative (add new alternative with links)
-                    msg.add_alternative(html_table, subtype='html')
-                except Exception as e:
-                    st.warning(f"Nie udało się zaktualizować treści wiadomości: {e}")
+                # we'll recreate the EmailMessage after this block so the final bodies (with links)
+                # are used when sending
+
+            # Build EmailMessage now that email_body and html_table are final
+            msg = EmailMessage()
+            msg["From"] = USERNAME
+            msg["To"] = DESTINATION
+            msg["Subject"] = title
+            msg.set_content(email_body)
+            msg.add_alternative(html_table, subtype='html')
 
             context = ssl.create_default_context()
             with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context) as server:
