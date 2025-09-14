@@ -3,3 +3,6 @@ google-api-python-client>=2.70.0
 google-auth>=2.20.0
 google-auth-httplib2>=0.1.0
 google-auth-oauthlib>=1.2.0
+imageio-ffmpeg>=0.4.8
+# optional: moviepy for higher-level Python API (requires imageio-ffmpeg)
+moviepy>=1.0.3

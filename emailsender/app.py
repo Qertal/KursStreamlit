@@ -9,6 +9,10 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 from google.oauth2.credentials import Credentials as OAuthCredentials
 from google.auth.transport.requests import Request as GoogleRequest
+import subprocess
+import tempfile
+import os
+import imageio_ffmpeg as iio_ffmpeg
 
 # st.write("DB username:", st.secrets["DB_USERNAME"])
 # st.write("DB password:", st.secrets["DB_PASSWORD"])
@@ -206,11 +210,52 @@ if 'liczba_cwiczen' in st.session_state:
 
                     for uploaded in uploaded_files:
                         try:
-                            file_bytes = uploaded.getvalue()
+                            # compress/transcode using imageio-ffmpeg binary (available on Streamlit Cloud)
+                            def compress_uploaded_file_with_ffmpeg(uploaded_file, crf='28', max_width=1280, max_height=720):
+                                # write uploaded to temp file
+                                in_suffix = os.path.splitext(uploaded_file.name)[1] or '.bin'
+                                with tempfile.NamedTemporaryFile(delete=False, suffix=in_suffix) as inp:
+                                    inp.write(uploaded_file.getvalue())
+                                    inp_path = inp.name
+                                out_suffix = '.mp4'
+                                with tempfile.NamedTemporaryFile(delete=False, suffix=out_suffix) as outp:
+                                    out_path = outp.name
+                                ffmpeg_exe = iio_ffmpeg.get_ffmpeg_exe()
+                                # scale preserving aspect ratio, ensure even dimensions
+                                scale_filter = f"scale=trunc(min(iw,{max_width})/2)*2:trunc(min(ih,{max_height})/2)*2"
+                                cmd = [
+                                    ffmpeg_exe, '-y', '-i', inp_path,
+                                    '-vcodec', 'libx264', '-preset', 'veryfast', '-crf', str(crf),
+                                    '-vf', scale_filter,
+                                    '-acodec', 'aac', '-b:a', '128k',
+                                    out_path
+                                ]
+                                try:
+                                    subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                                    with open(out_path, 'rb') as f:
+                                        data = f.read()
+                                    new_name = os.path.splitext(uploaded_file.name)[0] + '.mp4'
+                                    mimetype = 'video/mp4'
+                                except Exception:
+                                    # fallback to original
+                                    data = uploaded_file.getvalue()
+                                    new_name = uploaded_file.name
+                                    mimetype = uploaded_file.type or 'application/octet-stream'
+                                finally:
+                                    try:
+                                        os.remove(inp_path)
+                                    except Exception:
+                                        pass
+                                    try:
+                                        os.remove(out_path)
+                                    except Exception:
+                                        pass
+                                return data, new_name, mimetype
+
+                            file_bytes, upload_name, mimetype = compress_uploaded_file_with_ffmpeg(uploaded)
                             fh = io.BytesIO(file_bytes)
-                            mimetype = uploaded.type or 'application/octet-stream'
                             media = MediaIoBaseUpload(fh, mimetype=mimetype)
-                            metadata = {'name': uploaded.name}
+                            metadata = {'name': upload_name}
                             created = drive_service.files().create(body=metadata, media_body=media, fields='id,webViewLink,webContentLink').execute()
                             file_id = created.get('id')
                             # make file readable by anyone with link
