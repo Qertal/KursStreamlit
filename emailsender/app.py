@@ -163,11 +163,15 @@ if 'liczba_cwiczen' in st.session_state:
             PASSWORD = st.secrets["PASSWORD"]
             DESTINATION = st.secrets["DESTINATION"]
 
+            # Build multipart email: plain-text fallback + HTML table
             msg = EmailMessage()
             msg["From"] = USERNAME
             msg["To"] = DESTINATION
             msg["Subject"] = title
-            msg.set_content(urllib.parse.quote(email_body))
+            # plain text fallback (do not URL-encode)
+            msg.set_content(email_body)
+            # add HTML alternative containing the centered table
+            msg.add_alternative(html_table, subtype="html")
 
             context = ssl.create_default_context()
             with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context) as server:
