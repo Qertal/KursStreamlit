@@ -208,6 +208,30 @@ if 'liczba_cwiczen' in st.session_state:
                         )
                         drive_service = build('drive', 'v3', credentials=creds)
 
+                    # prepare a folder on Drive named after the email subject/title
+                    folder_id = None
+                    try:
+                        shared_parent = st.secrets.get("GDRIVE_SHARED_DRIVE_ID") or st.secrets.get("GDRIVE_SHARED_DRIVE_FOLDER_ID")
+                        # search for existing folder with the same name
+                        q = f"name = '{title}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+                        if shared_parent:
+                            q = f"name = '{title}' and mimeType = 'application/vnd.google-apps.folder' and '{shared_parent}' in parents and trashed = false"
+                        resp = drive_service.files().list(q=q, spaces='drive', fields='files(id,name)', supportsAllDrives=bool(shared_parent)).execute()
+                        files_found = resp.get('files', [])
+                        if files_found:
+                            folder_id = files_found[0]['id']
+                        else:
+                            metadata_folder = {'name': title, 'mimeType': 'application/vnd.google-apps.folder'}
+                            if shared_parent:
+                                metadata_folder['parents'] = [shared_parent]
+                                created_folder = drive_service.files().create(body=metadata_folder, fields='id', supportsAllDrives=True).execute()
+                            else:
+                                created_folder = drive_service.files().create(body=metadata_folder, fields='id').execute()
+                            folder_id = created_folder.get('id')
+                    except Exception as e:
+                        st.warning(f"Nie udało się utworzyć/znaleźć folderu na Drive: {e}")
+                        folder_id = None
+
                     for uploaded in uploaded_files:
                         try:
                             # compress/transcode using imageio-ffmpeg binary (available on Streamlit Cloud)
@@ -256,11 +280,18 @@ if 'liczba_cwiczen' in st.session_state:
                             fh = io.BytesIO(file_bytes)
                             media = MediaIoBaseUpload(fh, mimetype=mimetype)
                             metadata = {'name': upload_name}
-                            created = drive_service.files().create(body=metadata, media_body=media, fields='id,webViewLink,webContentLink').execute()
+                            if folder_id:
+                                metadata['parents'] = [folder_id]
+                                created = drive_service.files().create(body=metadata, media_body=media, fields='id,webViewLink,webContentLink', supportsAllDrives=True).execute()
+                            else:
+                                created = drive_service.files().create(body=metadata, media_body=media, fields='id,webViewLink,webContentLink').execute()
                             file_id = created.get('id')
                             # make file readable by anyone with link
                             try:
-                                drive_service.permissions().create(fileId=file_id, body={'role': 'reader', 'type': 'anyone'}).execute()
+                                if folder_id:
+                                    drive_service.permissions().create(fileId=file_id, body={'role': 'reader', 'type': 'anyone'}, supportsAllDrives=True).execute()
+                                else:
+                                    drive_service.permissions().create(fileId=file_id, body={'role': 'reader', 'type': 'anyone'}).execute()
                             except Exception:
                                 # permission may already be set or API may not allow change for this account
                                 pass
