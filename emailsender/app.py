@@ -68,7 +68,10 @@ if 'liczba_cwiczen' in st.session_state:
         
         st.write('Jeśli chcesz wyczyścic formularz, to odśwież strone')
 
-        if submitted:
+    # allow uploading multiple video files to attach to the email
+    uploaded_files = st.file_uploader('Dołącz pliki wideo (mp4, mov) - opcjonalnie', type=['mp4','mov','avi','mkv'], accept_multiple_files=True)
+
+    if submitted:
             for i, j in enumerate(cwiczenia_input, 1):
                 st.session_state.cwiczenia[f'Cwiczenie {i}'] = j
             st.write(st.session_state.cwiczenia)
@@ -172,6 +175,21 @@ if 'liczba_cwiczen' in st.session_state:
             msg.set_content(email_body)
             # add HTML alternative containing the centered table
             msg.add_alternative(html_table, subtype="html")
+
+            # Attach uploaded files (if any)
+            if uploaded_files:
+                for uploaded in uploaded_files:
+                    try:
+                        file_bytes = uploaded.getvalue()
+                        maintype, subtype = 'application', 'octet-stream'
+                        # attempt to infer from name
+                        if uploaded.type:
+                            parts = uploaded.type.split('/')
+                            if len(parts) == 2:
+                                maintype, subtype = parts
+                        msg.add_attachment(file_bytes, maintype=maintype, subtype=subtype, filename=uploaded.name)
+                    except Exception as e:
+                        st.warning(f"Nie udało się dołączyć pliku {uploaded.name}: {e}")
 
             context = ssl.create_default_context()
             with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context) as server:
