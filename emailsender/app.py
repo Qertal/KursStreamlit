@@ -166,7 +166,7 @@ if 'liczba_cwiczen' in st.session_state:
             msg["From"] = USERNAME
             msg["To"] = DESTINATION
             msg["Subject"] = title
-            msg.set_content(st.code(email_body, language=''))
+            msg.set_content(st.markdown(html_table, unsafe_allow_html=True))
 
             context = ssl.create_default_context()
             with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context) as server:
