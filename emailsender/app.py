@@ -81,7 +81,7 @@ if 'liczba_cwiczen' in st.session_state:
     if submitted:
             for i, j in enumerate(cwiczenia_input, 1):
                 st.session_state.cwiczenia[f'Cwiczenie {i}'] = j
-            st.write(st.session_state.cwiczenia)
+            # st.write(st.session_state.cwiczenia)
             st.success("Dane zostały zapisane!")
             
 
@@ -156,8 +156,8 @@ if 'liczba_cwiczen' in st.session_state:
             st.markdown("**Podgląd tabeli (HTML, wyrównana):**", unsafe_allow_html=False)
             st.markdown(html_table, unsafe_allow_html=True)
 
-            st.markdown("**Tekst do wysłania (monospace, wyrównana tabela ASCII):**")
-            st.code(email_body, language='')
+            # st.markdown("**Tekst do wysłania (monospace, wyrównana tabela ASCII):**")
+            # st.code(email_body, language='')
 
             # # Download button for .txt
             # st.download_button(label='Pobierz jako .txt', data=email_body, file_name='trening.txt', mime='text/plain')
