@@ -244,6 +244,15 @@ if 'liczba_cwiczen' in st.session_state:
                 # append links list under the existing HTML table
                 html_table = html_table + links_html
 
+                # Update the EmailMessage content so the links are actually sent
+                try:
+                    # update plain-text body
+                    msg.set_content(email_body)
+                    # add/update HTML alternative (add new alternative with links)
+                    msg.add_alternative(html_table, subtype='html')
+                except Exception as e:
+                    st.warning(f"Nie udało się zaktualizować treści wiadomości: {e}")
+
             context = ssl.create_default_context()
             with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context) as server:
                 server.login(USERNAME, PASSWORD)
