@@ -7,6 +7,8 @@ import json
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
+from google.oauth2.credentials import Credentials as OAuthCredentials
+from google.auth.transport.requests import Request as GoogleRequest
 
 # st.write("DB username:", st.secrets["DB_USERNAME"])
 # st.write("DB password:", st.secrets["DB_PASSWORD"])
@@ -185,16 +187,30 @@ if 'liczba_cwiczen' in st.session_state:
             drive_links = []
             if uploaded_files:
                 try:
-                    sa_info = st.secrets.get("GDRIVE_SERVICE_ACCOUNT") or st.secrets.get("GDRIVE_SERVICE_ACCOUNT_JSON")
-                    if not sa_info:
-                        raise RuntimeError("Brakuje st.secrets['GDRIVE_SERVICE_ACCOUNT'] z JSON klucza konta serwisowego")
-                    if isinstance(sa_info, str):
-                        sa_info = json.loads(sa_info)
+                    # Prefer OAuth credentials (user's Drive) if provided in st.secrets
+                    if st.secrets.get('GDRIVE_OAUTH_REFRESH_TOKEN') and st.secrets.get('GDRIVE_OAUTH_CLIENT_ID') and st.secrets.get('GDRIVE_OAUTH_CLIENT_SECRET'):
+                        oauth_creds = OAuthCredentials(
+                            token=None,
+                            refresh_token=st.secrets['GDRIVE_OAUTH_REFRESH_TOKEN'],
+                            client_id=st.secrets['GDRIVE_OAUTH_CLIENT_ID'],
+                            client_secret=st.secrets['GDRIVE_OAUTH_CLIENT_SECRET'],
+                            token_uri='https://oauth2.googleapis.com/token',
+                            scopes=['https://www.googleapis.com/auth/drive.file']
+                        )
+                        # refresh to get access token
+                        oauth_creds.refresh(GoogleRequest())
+                        drive_service = build('drive', 'v3', credentials=oauth_creds)
+                    else:
+                        sa_info = st.secrets.get("GDRIVE_SERVICE_ACCOUNT") or st.secrets.get("GDRIVE_SERVICE_ACCOUNT_JSON")
+                        if not sa_info:
+                            raise RuntimeError("Brakuje st.secrets['GDRIVE_SERVICE_ACCOUNT'] z JSON klucza konta serwisowego")
+                        if isinstance(sa_info, str):
+                            sa_info = json.loads(sa_info)
 
-                    creds = service_account.Credentials.from_service_account_info(
-                        sa_info, scopes=["https://www.googleapis.com/auth/drive"]
-                    )
-                    drive_service = build('drive', 'v3', credentials=creds)
+                        creds = service_account.Credentials.from_service_account_info(
+                            sa_info, scopes=["https://www.googleapis.com/auth/drive"]
+                        )
+                        drive_service = build('drive', 'v3', credentials=creds)
 
                     for uploaded in uploaded_files:
                         try:
