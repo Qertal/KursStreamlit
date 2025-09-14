@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import random
+import os
 
 st.set_page_config(
     page_title="Koło Fortuny",
@@ -33,7 +34,7 @@ def tom_first(options):
     
 def two_lucky_guys(lista: list):
     x = lista[:]
-    persons = ['Pawel z Sacza','Tomek','Alicja', 'Patrycja R', 'Jarek']
+    persons = ['Pawel z Sacza','Alicja']
     possibilities = [i for i in persons if i in x]
     starting_len = len(x)
     k = 0
@@ -49,6 +50,8 @@ if 'options' not in st.session_state:
     st.session_state.options = []
 if 'last_winner' not in st.session_state:
     st.session_state.last_winner = None
+if 'last_gif' not in st.session_state:
+    st.session_state.last_gif = None
 # initialize control state once
 if 'spinning' not in st.session_state:
     st.session_state.spinning = False
@@ -84,9 +87,10 @@ Wiktoria"""
     ).splitlines()
 
     if st.button("Zatwierdź opcje") and len([opt for opt in options if opt.strip()]):
-        options = two_lucky_guys(options)
+        # options = two_lucky_guys(options)
         st.session_state.options = [opt for opt in options if opt.strip()]
         st.session_state.last_winner = None
+        st.session_state.last_gif = None
 
 if st.session_state.options:
     col4, col1, col2, col3 = st.columns([1,5,5,1])  # poidzial na kolsy, zeby to w miare sensownie wygladalo
@@ -137,6 +141,16 @@ if st.session_state.options:
             st.session_state.spinning = False
             winner = options_sorted[winner_idx]
             st.session_state.last_winner = winner
+            # wybierz losowy gif z folderu 'gifs' obok tego pliku (jeśli istnieje)
+            gif_dir = os.path.join(os.path.dirname(__file__), "gifs")
+            gif_list = []
+            if os.path.exists(gif_dir):
+                gif_list = [os.path.join(gif_dir, f) for f in os.listdir(gif_dir) if f.lower().endswith('.gif')]
+            if gif_list:
+                st.session_state.last_gif = random.choice(gif_list)
+            else:
+                st.session_state.last_gif = None
+
             st.session_state.options.remove(winner)
             time.sleep(0.25)
             # iterat is managed in session_state
@@ -170,6 +184,21 @@ if st.session_state.options:
                 """,
                 unsafe_allow_html=True
             )
+            # pokaż gif (plik .gif powinien być zapętlony samodzielnie)
+            if st.session_state.last_gif:
+                try:
+                    # center the image in this column using inner columns
+                    left, mid, right = st.columns([1, 2, 1])
+                    with mid:
+                        if winner == 'Tomek':
+                            st.image('gifs/tomek/tomek.gif', width=540)
+                        # elif winner == 'Jarek':
+                        #     st.image('gifs/jarek/jarek.gif', width=540)
+                        else:
+                            st.image(st.session_state.last_gif, width=540)
+                except Exception:
+                    # jeśli wyświetlenie bezpośrednie nie zadziała, pokaż informację
+                    st.warning('Nie udało się wyświetlić GIF-a.')
         else:
             st.info("Czekam na losowanie...")
 
@@ -180,6 +209,7 @@ if st.session_state.options:
             # bezpieczny reset całego stanu gry
             st.session_state.options = []
             st.session_state.last_winner = None
+            st.session_state.last_gif = None
             st.session_state.spin_attempt = 0
             st.session_state.place = random.randint(1, 3)
             st.session_state.spinning = False
