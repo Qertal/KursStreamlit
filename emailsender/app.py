@@ -1,6 +1,7 @@
 import streamlit as st
 import smtplib, ssl
 from email.message import EmailMessage
+import urllib.parse
 
 # st.write("DB username:", st.secrets["DB_USERNAME"])
 # st.write("DB password:", st.secrets["DB_PASSWORD"])
@@ -151,7 +152,7 @@ if 'liczba_cwiczen' in st.session_state:
             # # Download button for .txt
             # st.download_button(label='Pobierz jako .txt', data=email_body, file_name='trening.txt', mime='text/plain')
 
-            # # Mailto link (URL-encoded body). Note: long bodies may be truncated by mail clients.
+            #Mailto link (URL-encoded body). Note: long bodies may be truncated by mail clients.
             # import urllib.parse
             # mailto = f"mailto:?subject={urllib.parse.quote(subject)}&body={urllib.parse.quote(email_body)}"
             # st.markdown(f"[Otwórz klienta pocztowego]({mailto})")
@@ -166,7 +167,7 @@ if 'liczba_cwiczen' in st.session_state:
             msg["From"] = USERNAME
             msg["To"] = DESTINATION
             msg["Subject"] = title
-            msg.set_content(st.markdown(html_table, unsafe_allow_html=True))
+            msg.set_content(urllib.parse.quote(email_body))
 
             context = ssl.create_default_context()
             with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context) as server:
