@@ -2,6 +2,11 @@ import streamlit as st
 import smtplib, ssl
 from email.message import EmailMessage
 import urllib.parse
+import io
+import json
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseUpload
 
 # st.write("DB username:", st.secrets["DB_USERNAME"])
 # st.write("DB password:", st.secrets["DB_PASSWORD"])
@@ -176,20 +181,52 @@ if 'liczba_cwiczen' in st.session_state:
             # add HTML alternative containing the centered table
             msg.add_alternative(html_table, subtype="html")
 
-            # Attach uploaded files (if any)
+            # Upload uploaded files to Google Drive and collect shareable links
+            drive_links = []
             if uploaded_files:
-                for uploaded in uploaded_files:
-                    try:
-                        file_bytes = uploaded.getvalue()
-                        maintype, subtype = 'application', 'octet-stream'
-                        # attempt to infer from name
-                        if uploaded.type:
-                            parts = uploaded.type.split('/')
-                            if len(parts) == 2:
-                                maintype, subtype = parts
-                        msg.add_attachment(file_bytes, maintype=maintype, subtype=subtype, filename=uploaded.name)
-                    except Exception as e:
-                        st.warning(f"Nie udało się dołączyć pliku {uploaded.name}: {e}")
+                try:
+                    sa_info = st.secrets.get("GDRIVE_SERVICE_ACCOUNT") or st.secrets.get("GDRIVE_SERVICE_ACCOUNT_JSON")
+                    if not sa_info:
+                        raise RuntimeError("Brakuje st.secrets['GDRIVE_SERVICE_ACCOUNT'] z JSON klucza konta serwisowego")
+                    if isinstance(sa_info, str):
+                        sa_info = json.loads(sa_info)
+
+                    creds = service_account.Credentials.from_service_account_info(
+                        sa_info, scopes=["https://www.googleapis.com/auth/drive"]
+                    )
+                    drive_service = build('drive', 'v3', credentials=creds)
+
+                    for uploaded in uploaded_files:
+                        try:
+                            file_bytes = uploaded.getvalue()
+                            fh = io.BytesIO(file_bytes)
+                            mimetype = uploaded.type or 'application/octet-stream'
+                            media = MediaIoBaseUpload(fh, mimetype=mimetype)
+                            metadata = {'name': uploaded.name}
+                            created = drive_service.files().create(body=metadata, media_body=media, fields='id,webViewLink,webContentLink').execute()
+                            file_id = created.get('id')
+                            # make file readable by anyone with link
+                            try:
+                                drive_service.permissions().create(fileId=file_id, body={'role': 'reader', 'type': 'anyone'}).execute()
+                            except Exception:
+                                # permission may already be set or API may not allow change for this account
+                                pass
+                            link = created.get('webViewLink') or created.get('webContentLink') or f"https://drive.google.com/uc?id={file_id}&export=download"
+                            drive_links.append({'name': uploaded.name, 'link': link})
+                        except Exception as e:
+                            st.warning(f"Upload nieudany dla {uploaded.name}: {e}")
+                except Exception as e:
+                    st.error(f"Problem z połączeniem do Google Drive: {e}")
+
+            # If we uploaded files to Drive, append their links to text and HTML bodies
+            if drive_links:
+                links_text = '\n'.join(f"{it['name']}: {it['link']}" for it in drive_links)
+                email_body = email_body + '\n\nZałączniki (linki):\n' + links_text
+                links_html = '<p><strong>Załączniki (linki):</strong></p><ul>' + ''.join([
+                    f"<li><a href='{it['link']}' target='_blank'>{it['name']}</a></li>" for it in drive_links
+                ]) + '</ul>'
+                # append links list under the existing HTML table
+                html_table = html_table + links_html
 
             context = ssl.create_default_context()
             with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context) as server:
