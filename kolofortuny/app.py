@@ -66,7 +66,6 @@ if not st.session_state.options:
         "Wpisz opcje (każda w nowej linii):",
         """Pawel z Sacza
 Pawel z Łodzi
-Filip
 Gerard
 Patrycja Sz
 Piotrek
@@ -192,8 +191,8 @@ if st.session_state.options:
                     with mid:
                         if winner == 'Tomek':
                             st.image('gifs/tomek/tomek.gif', width=540)
-                        # elif winner == 'Jarek':
-                        #     st.image('gifs/jarek/jarek.gif', width=540)
+                        # elif winner == 'Alicja':
+                            # st.image('gifs/jarek/jarek.gif', width=540)
                         else:
                             st.image(st.session_state.last_gif, width=540)
                 except Exception:
