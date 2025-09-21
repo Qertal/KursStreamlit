@@ -23,7 +23,8 @@ def get_drive_service():
             client_id=st.secrets['GDRIVE_OAUTH_CLIENT_ID'],
             client_secret=st.secrets['GDRIVE_OAUTH_CLIENT_SECRET'],
             token_uri='https://oauth2.googleapis.com/token',
-            scopes=['https://www.googleapis.com/auth/drive.readonly']
+            # Use the same scope as sender to match the issued refresh token
+            scopes=['https://www.googleapis.com/auth/drive.file']
         )
         creds.refresh(GoogleRequest())
         return build('drive', 'v3', credentials=creds)
