@@ -14,6 +14,7 @@ import tempfile
 import os
 import imageio_ffmpeg as iio_ffmpeg
 import csv
+from typing import List
 
 # st.write("DB username:", st.secrets["DB_USERNAME"])
 # st.write("DB password:", st.secrets["DB_PASSWORD"])
@@ -21,6 +22,39 @@ import csv
 # Nazwa Cwiczenia, Ciężar, Liczba Serii, Liczba powtórzeń (jeśli ćwiczenia wykonywane na czas, dopisz 's' na koniec), Tempo, RPE, Uwagi
 
 st.title("Formularz treningowy Niedojdy Bojdy")
+
+# --- Drive sharing helpers: private by default, share to specific emails only ---
+def _parse_share_targets() -> tuple[list[str], str]:
+    """Return (emails, role). If no emails in secrets, fallback to DESTINATION.
+    Accepts comma-separated string or list in secrets.
+    """
+    share_with = st.secrets.get("GDRIVE_SHARE_WITH", "")
+    emails: List[str] = []
+    if isinstance(share_with, str):
+        emails = [e.strip() for e in share_with.split(",") if e and e.strip()]
+    elif isinstance(share_with, (list, tuple, set)):
+        emails = [str(e).strip() for e in share_with if str(e).strip()]
+    # Fallback: ensure DESTINATION has access so link w mailu działa dla odbiorcy
+    if not emails:
+        dest = st.secrets.get("DESTINATION")
+        if isinstance(dest, str) and dest.strip():
+            emails = [e.strip() for e in dest.split(",") if e.strip()]
+    role = st.secrets.get("GDRIVE_SHARE_ROLE", "reader")
+    return emails, role
+
+
+def _share_to_emails(drive_service, resource_id: str, emails: list[str], role: str = "reader", supports_all_drives: bool = False):
+    """Grant explicit user permissions on a Drive file/folder (no public access)."""
+    for email in emails:
+        try:
+            drive_service.permissions().create(
+                fileId=resource_id,
+                body={"type": "user", "role": role, "emailAddress": email},
+                sendNotificationEmail=False,
+                supportsAllDrives=supports_all_drives,
+            ).execute()
+        except Exception as e:
+            st.warning(f"Nie udało się udostępnić zasobu dla {email}: {e}")
 
 st.set_page_config(layout='wide')
 
@@ -228,6 +262,17 @@ if 'liczba_cwiczen' in st.session_state:
                         else:
                             created_folder = drive_service.files().create(body=metadata_folder, fields='id').execute()
                         folder_id = created_folder.get('id')
+
+                    # Private sharing: grant access only to selected users (no public link)
+                    share_emails, share_role = _parse_share_targets()
+                    if folder_id and share_emails:
+                        _share_to_emails(
+                            drive_service,
+                            folder_id,
+                            share_emails,
+                            role=share_role,
+                            supports_all_drives=bool(shared_parent),
+                        )
                 except Exception as e:
                     st.warning(f"Nie udało się utworzyć/znaleźć folderu na Drive: {e}")
                     folder_id = None
@@ -255,6 +300,11 @@ if 'liczba_cwiczen' in st.session_state:
                     json_link = json_created.get('webViewLink')
                     if json_link:
                         drive_links.append({'name': 'dane.json', 'link': json_link})
+                    # If no folder to inherit ACLs, share file individually
+                    if not folder_id:
+                        share_emails, share_role = _parse_share_targets()
+                        if share_emails:
+                            _share_to_emails(drive_service, json_created.get('id'), share_emails, role=share_role)
                 except Exception as e:
                     st.warning(f"Nie udało się zapisać JSON z tabelą: {e}")
 
@@ -280,6 +330,11 @@ if 'liczba_cwiczen' in st.session_state:
                     csv_link = csv_created.get('webViewLink')
                     if csv_link:
                         drive_links.append({'name': 'dane.csv', 'link': csv_link})
+                    # If no folder to inherit ACLs, share file individually
+                    if not folder_id:
+                        share_emails, share_role = _parse_share_targets()
+                        if share_emails:
+                            _share_to_emails(drive_service, csv_created.get('id'), share_emails, role=share_role)
                 except Exception as e:
                     st.warning(f"Nie udało się zapisać CSV z tabelą: {e}")
 
@@ -338,15 +393,11 @@ if 'liczba_cwiczen' in st.session_state:
                             else:
                                 created = drive_service.files().create(body=metadata, media_body=media, fields='id,webViewLink,webContentLink').execute()
                             file_id = created.get('id')
-                            # make file readable by anyone with link
-                            try:
-                                if folder_id:
-                                    drive_service.permissions().create(fileId=file_id, body={'role': 'reader', 'type': 'anyone'}, supportsAllDrives=True).execute()
-                                else:
-                                    drive_service.permissions().create(fileId=file_id, body={'role': 'reader', 'type': 'anyone'}).execute()
-                            except Exception:
-                                # permission may already be set or API may not allow change for this account
-                                pass
+                            # Do NOT grant public permission; keep private. If no folder, share to selected users only.
+                            if not folder_id:
+                                share_emails, share_role = _parse_share_targets()
+                                if share_emails:
+                                    _share_to_emails(drive_service, file_id, share_emails, role=share_role)
                             link = created.get('webViewLink') or created.get('webContentLink') or f"https://drive.google.com/uc?id={file_id}&export=download"
                             drive_links.append({'name': uploaded.name, 'link': link})
                     except Exception as e:
