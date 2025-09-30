@@ -27,23 +27,27 @@ def tom_first(options):
         # upewnij się, że Tomek nie jest pierwszy, jeśli jest inny element
         if len(result) > 1 and result[0] == 'Tomek':
             result[0], result[1] = result[1], result[0]
-        return result
     else:
-        random.shuffle(options)
-        return options
+        # nie modyfikuj oryginalnej listy w miejscu
+        result = options[:]
+        random.shuffle(result)
+
+    # Nowa zasada: jeśli na liście jest "Pawel z Sacza" to przenosimy go na koniec
+    if 'Pawel z Sacza' in result and len(result) > 1:
+        result = [x for x in result if x != 'Pawel z Sacza'] + ['Pawel z Sacza']
+
+    return result
     
 def two_lucky_guys(lista: list):
+    """Zwróć listę bez maksymalnie dwóch osób z predefiniowanej listy,
+    bez ryzyka błędów przy pustych możliwościach."""
     x = lista[:]
-    persons = ['Pawel z Sacza','Alicja']
-    possibilities = [i for i in persons if i in x]
-    starting_len = len(x)
-    k = 0
-    while (abs(len(x) - starting_len) < 2) and k < 100:
-        drop_id = random.randint(0, len(possibilities)-1)
-        person_to_drop = possibilities[drop_id]
-        x.remove(person_to_drop)
-        possibilities.remove(person_to_drop)
-        k+=1
+    persons = ['Pawel z Sacza', 'Alicja']
+    present = [p for p in persons if p in x]
+    # wylosuj do 2 osób spośród dostępnych (jeśli są)
+    to_remove = random.sample(present, k=min(2, len(present))) if present else []
+    for p in to_remove:
+        x.remove(p)
     return x
 
 if 'options' not in st.session_state:
@@ -57,8 +61,12 @@ if 'spinning' not in st.session_state:
     st.session_state.spinning = False
 if 'spin_attempt' not in st.session_state:
     st.session_state.spin_attempt = 0
-if 'place' not in st.session_state:
-    st.session_state.place = random.randint(1, 3)
+# (legacy) 'place' no longer used for Tomek forcing – can be removed safely
+if 'place' in st.session_state:
+    del st.session_state['place']
+if 'pawel_sound' not in st.session_state:
+    # flaga do wyświetlenia / odtworzenia dźwięku po wygranej Pawła
+    st.session_state.pawel_sound = False
 
 # Wpisywanie opcji tylko na początku gry
 if not st.session_state.options:
@@ -90,12 +98,25 @@ Wiktoria"""
         st.session_state.options = [opt for opt in options if opt.strip()]
         st.session_state.last_winner = None
         st.session_state.last_gif = None
+        # zapamiętaj liczbę początkową i ustal cel losowania dla Tomka (3 lub 4)
+        st.session_state.initial_count = len(st.session_state.options)
+        if 'Tomek' in st.session_state.options:
+            if st.session_state.initial_count >= 4:
+                # Tomek zawsze ma wypaść w 3 lub 4 losowaniu
+                st.session_state.tom_target_draw = random.choice([3, 4])
+            elif st.session_state.initial_count == 3:
+                st.session_state.tom_target_draw = 3
+            else:
+                # mniej niż 3 osoby: nie da się wymusić 3/4, weź ostatni możliwy numer
+                st.session_state.tom_target_draw = st.session_state.initial_count
+        else:
+            st.session_state.tom_target_draw = None
 
 if st.session_state.options:
     col4, col1, col2, col3 = st.columns([1,5,5,1])  # poidzial na kolsy, zeby to w miare sensownie wygladalo
     # use session_state counters so values persist across reruns
     iterat = st.session_state.spin_attempt
-    place = st.session_state.place
+    # 'place' logic removed
     with col1:
         spin = st.button("Zakręć kołem!")
         # spinning is initialized at module start
@@ -110,15 +131,47 @@ if st.session_state.options:
             st.session_state.spinning = True
             spin_placeholder = st.empty()
             # tomek pierwszy, do dodania siebie gdzies chociaz w miare na poczatku XD, coś a'la 3/4, ewentualnie pod koniec jak i tak losuje
-            if 'Tomek' in options_sorted and iterat == place:
-                # force Tomek to win on this spin attempt
-                winner_idx = options_sorted.index('Tomek')
-                # after forcing, pick a new random place for next time
-                st.session_state.place = random.randint(1, 3)
-                st.session_state.spin_attempt = 0
-                iterat = 0
-            else:
-                winner_idx = np.random.randint(n)
+            # NOWE ZASADY LOSOWANIA XD:
+            # 1) "Pawel z Sacza" zawsze ostatni (jeśli więcej niż 1 osoba na liście) pod ostatni
+            # dzien przygotowowka
+            # 2) "Tomek" zawsze jako 3. lub 4. (zależnie od rozmiaru listy na starcie)
+            #    - przed jego docelowym numerem wykluczamy go z losowania
+            #    - w jego docelowym numerze wymuszamy wygraną
+            #    - jeśli z uwagi na "Pawła ostatniego" nie ma kogo losować, wybieramy Tomka
+            draw_no = None
+            if 'initial_count' in st.session_state and st.session_state.initial_count:
+                draw_no = st.session_state.initial_count - len(st.session_state.options) + 1
+
+            # zacznij od pełnej puli
+            eligible_indices = list(range(n))
+            # wyklucz Pawła, jeśli to nie ostatnia osoba
+            if n > 1:
+                eligible_indices = [i for i in eligible_indices if options_sorted[i] != 'Pawel z Sacza']
+
+            forced = False
+            # logika Tomka
+            tom_target = st.session_state.get('tom_target_draw', None)
+            if 'Tomek' in options_sorted and tom_target and draw_no:
+                if draw_no == tom_target:
+                    # wymuś Tomka teraz
+                    winner_idx = options_sorted.index('Tomek')
+                    forced = True
+                elif draw_no < tom_target:
+                    # wyklucz Tomka dopóki nie osiągniemy docelowego numeru
+                    eligible_indices = [i for i in eligible_indices if options_sorted[i] != 'Tomek']
+                    if not eligible_indices:
+                        # Jeśli po wykluczeniach nie ma nikogo (zazwyczaj zostali tylko Tomek i Pawel), bierz Tomka
+                        winner_idx = options_sorted.index('Tomek')
+                        forced = True
+                else:  # draw_no > tom_target, awaryjnie wymuś Tomka jeśli jeszcze jest
+                    if 'Tomek' in options_sorted:
+                        winner_idx = options_sorted.index('Tomek')
+                        forced = True
+
+            if not forced:
+                if not eligible_indices:
+                    eligible_indices = list(range(n))
+                winner_idx = random.choice(eligible_indices)
             st.session_state.spin_attempt += 1
 
             rounds = 1
@@ -140,6 +193,8 @@ if st.session_state.options:
             st.session_state.spinning = False
             winner = options_sorted[winner_idx]
             st.session_state.last_winner = winner
+            if winner == 'Pawel z Sacza':
+                st.session_state.pawel_sound = True
             # wybierz losowy gif z folderu 'gifs' obok tego pliku (jeśli istnieje)
             gif_dir = os.path.join(os.path.dirname(__file__), "gifs")
             gif_list = []
@@ -189,12 +244,29 @@ if st.session_state.options:
                     # center the image in this column using inner columns
                     left, mid, right = st.columns([1, 2, 1])
                     with mid:
-                        if winner == 'Tomek':
-                            st.image('gifs/tomek/tomek.gif', width=540)
-                        # elif winner == 'Alicja':
-                            # st.image('gifs/jarek/jarek.gif', width=540)
-                        else:
+                        lw = st.session_state.last_winner
+                        base_dir = os.path.dirname(__file__)
+                        tomek_gif = os.path.join(base_dir, 'gifs', 'tomek', 'tomek.gif')
+                        pawel_gif = os.path.join(base_dir, 'gifs', 'pawel', 'pawel.gif')
+                        if lw == 'Tomek' and os.path.exists(tomek_gif):
+                            st.image(tomek_gif, width=540)
+                        elif lw == 'Pawel z Sacza' and os.path.exists(pawel_gif):
+                            st.image(pawel_gif, width=540)
+                        elif st.session_state.last_gif:
                             st.image(st.session_state.last_gif, width=540)
+                        else:
+                            st.info('Brak GIF-a do wyświetlenia.')
+                        # Audio dla Pawła z Sacza (jeśli dostępne)
+                        if lw == 'Pawel z Sacza':
+                            pawel_audio = os.path.join(base_dir, 'gifs', 'pawel', 'audio.mp3')
+                            if os.path.exists(pawel_audio):
+                                # odtwarzaj tylko raz automatycznie (po wygranej), potem można ręcznie
+                                if st.session_state.pawel_sound:
+                                    st.audio(pawel_audio)
+                                    st.session_state.pawel_sound = False
+                                # przycisk do ponownego odtworzenia
+                                if st.button('🔊 Zagraj dźwięk jeszcze raz', key='pawel_replay'):
+                                    st.audio(pawel_audio)
                 except Exception:
                     # jeśli wyświetlenie bezpośrednie nie zadziała, pokaż informację
                     st.warning('Nie udało się wyświetlić GIF-a.')
@@ -212,5 +284,7 @@ if st.session_state.options:
             st.session_state.spin_attempt = 0
             st.session_state.place = random.randint(1, 3)
             st.session_state.spinning = False
+            st.session_state.initial_count = None
+            st.session_state.tom_target_draw = None
 else:
     st.info("Wpisz opcje i zatwierdź, aby rozpocząć zabawę!")
