@@ -9,5 +9,9 @@ exxonticket/
 kolofortuny/kolovenv/
 # tablo/
 pytorch/client_secret.json
+<<<<<<< HEAD
 tablo/venv/
 kolofortuny/gifs/pawel/audio.mp3
+=======
+pytorch/__pycache__/token.cpython-311.pyc
+>>>>>>> ddd3de0462a8b2dad4227dad19428545df778c2d

@@ -13,6 +13,8 @@ import subprocess
 import tempfile
 import os
 import imageio_ffmpeg as iio_ffmpeg
+import csv
+from typing import List
 
 # st.write("DB username:", st.secrets["DB_USERNAME"])
 # st.write("DB password:", st.secrets["DB_PASSWORD"])
@@ -20,6 +22,39 @@ import imageio_ffmpeg as iio_ffmpeg
 # Nazwa Cwiczenia, Ciężar, Liczba Serii, Liczba powtórzeń (jeśli ćwiczenia wykonywane na czas, dopisz 's' na koniec), Tempo, RPE, Uwagi
 
 st.title("Formularz treningowy Niedojdy Bojdy")
+
+# --- Drive sharing helpers: private by default, share to specific emails only ---
+def _parse_share_targets() -> tuple[list[str], str]:
+    """Return (emails, role). If no emails in secrets, fallback to DESTINATION.
+    Accepts comma-separated string or list in secrets.
+    """
+    share_with = st.secrets.get("GDRIVE_SHARE_WITH", "")
+    emails: List[str] = []
+    if isinstance(share_with, str):
+        emails = [e.strip() for e in share_with.split(",") if e and e.strip()]
+    elif isinstance(share_with, (list, tuple, set)):
+        emails = [str(e).strip() for e in share_with if str(e).strip()]
+    # Fallback: ensure DESTINATION has access so link w mailu działa dla odbiorcy
+    if not emails:
+        dest = st.secrets.get("DESTINATION")
+        if isinstance(dest, str) and dest.strip():
+            emails = [e.strip() for e in dest.split(",") if e.strip()]
+    role = st.secrets.get("GDRIVE_SHARE_ROLE", "reader")
+    return emails, role
+
+
+def _share_to_emails(drive_service, resource_id: str, emails: list[str], role: str = "reader", supports_all_drives: bool = False):
+    """Grant explicit user permissions on a Drive file/folder (no public access)."""
+    for email in emails:
+        try:
+            drive_service.permissions().create(
+                fileId=resource_id,
+                body={"type": "user", "role": role, "emailAddress": email},
+                sendNotificationEmail=False,
+                supportsAllDrives=supports_all_drives,
+            ).execute()
+        except Exception as e:
+            st.warning(f"Nie udało się udostępnić zasobu dla {email}: {e}")
 
 st.set_page_config(layout='wide')
 
@@ -179,61 +214,133 @@ if 'liczba_cwiczen' in st.session_state:
 
             # We'll build the EmailMessage after upload and after we finalize email_body/html_table
 
-            # Upload uploaded files to Google Drive and collect shareable links
+            # Upload table and (optionally) files to Google Drive and collect shareable links
             drive_links = []
-            if uploaded_files:
+            try:
+                # Prefer OAuth credentials (user's Drive) if provided in st.secrets
+                if st.secrets.get('GDRIVE_OAUTH_REFRESH_TOKEN') and st.secrets.get('GDRIVE_OAUTH_CLIENT_ID') and st.secrets.get('GDRIVE_OAUTH_CLIENT_SECRET'):
+                    oauth_creds = OAuthCredentials(
+                        token=None,
+                        refresh_token=st.secrets['GDRIVE_OAUTH_REFRESH_TOKEN'],
+                        client_id=st.secrets['GDRIVE_OAUTH_CLIENT_ID'],
+                        client_secret=st.secrets['GDRIVE_OAUTH_CLIENT_SECRET'],
+                        token_uri='https://oauth2.googleapis.com/token',
+                        scopes=['https://www.googleapis.com/auth/drive.file']
+                    )
+                    # refresh to get access token
+                    oauth_creds.refresh(GoogleRequest())
+                    drive_service = build('drive', 'v3', credentials=oauth_creds)
+                else:
+                    sa_info = st.secrets.get("GDRIVE_SERVICE_ACCOUNT") or st.secrets.get("GDRIVE_SERVICE_ACCOUNT_JSON")
+                    if not sa_info:
+                        raise RuntimeError("Brakuje st.secrets['GDRIVE_SERVICE_ACCOUNT'] z JSON klucza konta serwisowego")
+                    if isinstance(sa_info, str):
+                        sa_info = json.loads(sa_info)
+
+                    creds = service_account.Credentials.from_service_account_info(
+                        sa_info, scopes=["https://www.googleapis.com/auth/drive"]
+                    )
+                    drive_service = build('drive', 'v3', credentials=creds)
+
+                # prepare a folder on Drive named after the email subject/title
+                folder_id = None
                 try:
-                    # Prefer OAuth credentials (user's Drive) if provided in st.secrets
-                    if st.secrets.get('GDRIVE_OAUTH_REFRESH_TOKEN') and st.secrets.get('GDRIVE_OAUTH_CLIENT_ID') and st.secrets.get('GDRIVE_OAUTH_CLIENT_SECRET'):
-                        oauth_creds = OAuthCredentials(
-                            token=None,
-                            refresh_token=st.secrets['GDRIVE_OAUTH_REFRESH_TOKEN'],
-                            client_id=st.secrets['GDRIVE_OAUTH_CLIENT_ID'],
-                            client_secret=st.secrets['GDRIVE_OAUTH_CLIENT_SECRET'],
-                            token_uri='https://oauth2.googleapis.com/token',
-                            scopes=['https://www.googleapis.com/auth/drive.file']
-                        )
-                        # refresh to get access token
-                        oauth_creds.refresh(GoogleRequest())
-                        drive_service = build('drive', 'v3', credentials=oauth_creds)
+                    shared_parent = st.secrets.get("GDRIVE_SHARED_DRIVE_ID") or st.secrets.get("GDRIVE_SHARED_DRIVE_FOLDER_ID")
+                    # search for existing folder with the same name
+                    q = f"name = '{title}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+                    if shared_parent:
+                        q = f"name = '{title}' and mimeType = 'application/vnd.google-apps.folder' and '{shared_parent}' in parents and trashed = false"
+                    resp = drive_service.files().list(q=q, spaces='drive', fields='files(id,name)', supportsAllDrives=bool(shared_parent)).execute()
+                    files_found = resp.get('files', [])
+                    if files_found:
+                        folder_id = files_found[0]['id']
                     else:
-                        sa_info = st.secrets.get("GDRIVE_SERVICE_ACCOUNT") or st.secrets.get("GDRIVE_SERVICE_ACCOUNT_JSON")
-                        if not sa_info:
-                            raise RuntimeError("Brakuje st.secrets['GDRIVE_SERVICE_ACCOUNT'] z JSON klucza konta serwisowego")
-                        if isinstance(sa_info, str):
-                            sa_info = json.loads(sa_info)
-
-                        creds = service_account.Credentials.from_service_account_info(
-                            sa_info, scopes=["https://www.googleapis.com/auth/drive"]
-                        )
-                        drive_service = build('drive', 'v3', credentials=creds)
-
-                    # prepare a folder on Drive named after the email subject/title
-                    folder_id = None
-                    try:
-                        shared_parent = st.secrets.get("GDRIVE_SHARED_DRIVE_ID") or st.secrets.get("GDRIVE_SHARED_DRIVE_FOLDER_ID")
-                        # search for existing folder with the same name
-                        q = f"name = '{title}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+                        metadata_folder = {'name': title, 'mimeType': 'application/vnd.google-apps.folder'}
                         if shared_parent:
-                            q = f"name = '{title}' and mimeType = 'application/vnd.google-apps.folder' and '{shared_parent}' in parents and trashed = false"
-                        resp = drive_service.files().list(q=q, spaces='drive', fields='files(id,name)', supportsAllDrives=bool(shared_parent)).execute()
-                        files_found = resp.get('files', [])
-                        if files_found:
-                            folder_id = files_found[0]['id']
+                            metadata_folder['parents'] = [shared_parent]
+                            created_folder = drive_service.files().create(body=metadata_folder, fields='id', supportsAllDrives=True).execute()
                         else:
-                            metadata_folder = {'name': title, 'mimeType': 'application/vnd.google-apps.folder'}
-                            if shared_parent:
-                                metadata_folder['parents'] = [shared_parent]
-                                created_folder = drive_service.files().create(body=metadata_folder, fields='id', supportsAllDrives=True).execute()
-                            else:
-                                created_folder = drive_service.files().create(body=metadata_folder, fields='id').execute()
-                            folder_id = created_folder.get('id')
-                    except Exception as e:
-                        st.warning(f"Nie udało się utworzyć/znaleźć folderu na Drive: {e}")
-                        folder_id = None
+                            created_folder = drive_service.files().create(body=metadata_folder, fields='id').execute()
+                        folder_id = created_folder.get('id')
 
-                    for uploaded in uploaded_files:
-                        try:
+                    # Private sharing: grant access only to selected users (no public link)
+                    share_emails, share_role = _parse_share_targets()
+                    if folder_id and share_emails:
+                        _share_to_emails(
+                            drive_service,
+                            folder_id,
+                            share_emails,
+                            role=share_role,
+                            supports_all_drives=bool(shared_parent),
+                        )
+                except Exception as e:
+                    st.warning(f"Nie udało się utworzyć/znaleźć folderu na Drive: {e}")
+                    folder_id = None
+
+                # upload the table as JSON
+                try:
+                    table_json = {
+                        'title': subject,
+                        'meta': {
+                            'imie': imie,
+                            'nazwisko': nazwisko,
+                            'data': str(data),
+                            'nr_treningu': nr_tren,
+                        },
+                        'rows': cwiczenia_input,
+                    }
+                    json_bytes = json.dumps(table_json, ensure_ascii=False, indent=2).encode('utf-8')
+                    json_media = MediaIoBaseUpload(io.BytesIO(json_bytes), mimetype='application/json')
+                    json_meta = {'name': 'dane.json'}
+                    if folder_id:
+                        json_meta['parents'] = [folder_id]
+                        json_created = drive_service.files().create(body=json_meta, media_body=json_media, fields='id,webViewLink', supportsAllDrives=True).execute()
+                    else:
+                        json_created = drive_service.files().create(body=json_meta, media_body=json_media, fields='id,webViewLink').execute()
+                    json_link = json_created.get('webViewLink')
+                    if json_link:
+                        drive_links.append({'name': 'dane.json', 'link': json_link})
+                    # If no folder to inherit ACLs, share file individually
+                    if not folder_id:
+                        share_emails, share_role = _parse_share_targets()
+                        if share_emails:
+                            _share_to_emails(drive_service, json_created.get('id'), share_emails, role=share_role)
+                except Exception as e:
+                    st.warning(f"Nie udało się zapisać JSON z tabelą: {e}")
+
+                # upload the table as CSV
+                try:
+                    headers_list = ["Ćwiczenie", "Ciężar", "Serie", "Powtórzenia", "Tempo", "RPE", "Uwagi"]
+                    csv_buf = io.StringIO()
+                    w = csv.writer(csv_buf)
+                    w.writerow(headers_list)
+                    for r in cwiczenia_input:
+                        w.writerow([
+                            r.get('cwiczenie','---'), r.get('ciezar','---'), r.get('serie','---'),
+                            r.get('powtorzenia','---'), r.get('tempo','---'), r.get('rpe','---'), r.get('uwagi','---')
+                        ])
+                    csv_bytes = csv_buf.getvalue().encode('utf-8')
+                    csv_media = MediaIoBaseUpload(io.BytesIO(csv_bytes), mimetype='text/csv')
+                    csv_meta = {'name': 'dane.csv'}
+                    if folder_id:
+                        csv_meta['parents'] = [folder_id]
+                        csv_created = drive_service.files().create(body=csv_meta, media_body=csv_media, fields='id,webViewLink', supportsAllDrives=True).execute()
+                    else:
+                        csv_created = drive_service.files().create(body=csv_meta, media_body=csv_media, fields='id,webViewLink').execute()
+                    csv_link = csv_created.get('webViewLink')
+                    if csv_link:
+                        drive_links.append({'name': 'dane.csv', 'link': csv_link})
+                    # If no folder to inherit ACLs, share file individually
+                    if not folder_id:
+                        share_emails, share_role = _parse_share_targets()
+                        if share_emails:
+                            _share_to_emails(drive_service, csv_created.get('id'), share_emails, role=share_role)
+                except Exception as e:
+                    st.warning(f"Nie udało się zapisać CSV z tabelą: {e}")
+
+                # optionally upload user files into that folder
+                for uploaded in uploaded_files or []:
+                    try:
                             # compress/transcode using imageio-ffmpeg binary (available on Streamlit Cloud)
                             def compress_uploaded_file_with_ffmpeg(uploaded_file, crf='28', max_width=1280, max_height=720):
                                 # write uploaded to temp file
@@ -286,21 +393,17 @@ if 'liczba_cwiczen' in st.session_state:
                             else:
                                 created = drive_service.files().create(body=metadata, media_body=media, fields='id,webViewLink,webContentLink').execute()
                             file_id = created.get('id')
-                            # make file readable by anyone with link
-                            try:
-                                if folder_id:
-                                    drive_service.permissions().create(fileId=file_id, body={'role': 'reader', 'type': 'anyone'}, supportsAllDrives=True).execute()
-                                else:
-                                    drive_service.permissions().create(fileId=file_id, body={'role': 'reader', 'type': 'anyone'}).execute()
-                            except Exception:
-                                # permission may already be set or API may not allow change for this account
-                                pass
+                            # Do NOT grant public permission; keep private. If no folder, share to selected users only.
+                            if not folder_id:
+                                share_emails, share_role = _parse_share_targets()
+                                if share_emails:
+                                    _share_to_emails(drive_service, file_id, share_emails, role=share_role)
                             link = created.get('webViewLink') or created.get('webContentLink') or f"https://drive.google.com/uc?id={file_id}&export=download"
                             drive_links.append({'name': uploaded.name, 'link': link})
-                        except Exception as e:
-                            st.warning(f"Upload nieudany dla {uploaded.name}: {e}")
-                except Exception as e:
-                    st.error(f"Problem z połączeniem do Google Drive: {e}")
+                    except Exception as e:
+                        st.warning(f"Upload nieudany dla {uploaded.name}: {e}")
+            except Exception as e:
+                st.error(f"Problem z połączeniem do Google Drive: {e}")
 
             # If we uploaded files to Drive, append their links to text and HTML bodies
             if drive_links:
