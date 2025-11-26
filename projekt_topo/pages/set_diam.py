@@ -45,7 +45,8 @@ if st.session_state.get('fields_generated', False):
                     points[i, k] = st.number_input(
                         label=f"Wspolrzedna {k + 1}",
                         key=f'coord_{i}_{k}',
-                        value=random.randint(-15, 15)
+                        value=random.randint(-15, 15),
+                        step=.01,
                     )
 
         submitted = st.form_submit_button(label="Oblicz")
